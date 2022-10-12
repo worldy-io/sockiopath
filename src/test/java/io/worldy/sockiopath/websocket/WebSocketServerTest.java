@@ -5,6 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.worldy.sockiopath.CountDownLatchChannelHandler;
+import io.worldy.sockiopath.SockiopathServer;
 import io.worldy.sockiopath.websocket.client.BootstrappedWebSocketClient;
 import org.junit.jupiter.api.Test;
 
@@ -25,8 +26,8 @@ public class WebSocketServerTest {
 
     @Test
     void startServerTest() throws InterruptedException, ExecutionException {
-        WebSocketServer webSocketServer = new WebSocketServer(
-                WebSocketServer.basicChannelHandler(channelEchoHandler(), null),
+        SockiopathServer webSocketServer = new WebSocketServer(
+                SockiopathServer.basicChannelHandler(channelEchoHandler(), null),
                 Executors.newFixedThreadPool(1),
                 0
         );
@@ -64,8 +65,8 @@ public class WebSocketServerTest {
 
     @Test
     void connectTimeoutTest() throws InterruptedException, ExecutionException {
-        WebSocketServer webSocketServer = new WebSocketServer(
-                WebSocketServer.basicChannelHandler(channelEchoHandler(), null),
+        SockiopathServer webSocketServer = new WebSocketServer(
+                SockiopathServer.basicChannelHandler(channelEchoHandler(), null),
                 Executors.newFixedThreadPool(1),
                 0
         );
@@ -89,8 +90,8 @@ public class WebSocketServerTest {
 
     @Test
     void handshakeTimeoutTest() throws InterruptedException, ExecutionException {
-        WebSocketServer webSocketServer = new WebSocketServer(
-                WebSocketServer.basicChannelHandler(channelEchoHandler(), null),
+        SockiopathServer webSocketServer = new WebSocketServer(
+                SockiopathServer.basicChannelHandler(channelEchoHandler(), null),
                 Executors.newFixedThreadPool(1),
                 0
         );
@@ -114,8 +115,8 @@ public class WebSocketServerTest {
 
     @Test
     void bindPortException() {
-        WebSocketServer webSocketServer = new WebSocketServer(
-                WebSocketServer.basicChannelHandler(channelEchoHandler(), null),
+        SockiopathServer webSocketServer = new WebSocketServer(
+                SockiopathServer.basicChannelHandler(channelEchoHandler(), null),
                 Executors.newFixedThreadPool(1),
                 1
         );

@@ -10,6 +10,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.worldy.sockiopath.SockiopathServer;
 import io.worldy.sockiopath.StartServerResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-public class UdpServer {
+public class UdpServer implements SockiopathServer {
 
     private static final Logger logger = LoggerFactory.getLogger(UdpServer.class);
 
@@ -54,7 +55,7 @@ public class UdpServer {
 
                 Channel channel = bootstrap.bind(port).sync().channel();
                 ChannelFuture closeFuture = channel.closeFuture();
-                future.complete(new StartServerResult(getPort(channel), closeFuture));
+                future.complete(new StartServerResult(SockiopathServer.getPort(channel), closeFuture));
                 closeFuture.await();
             } catch (Exception ex) {
                 future.completeExceptionally(ex);
@@ -63,11 +64,6 @@ public class UdpServer {
             }
         });
         return future;
-    }
-
-    private int getPort(Channel channel) {
-        SocketAddress socketAddress = channel.localAddress();
-        return ((InetSocketAddress) socketAddress).getPort();
     }
 
     public static String byteBufferToString(ByteBuffer content) {
