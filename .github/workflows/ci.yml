@@ -38,7 +38,16 @@ jobs:
         with:
           java-version: 17
           distribution: 'adopt'
-          cache: 'maven'
+      - name: Cache Maven
+        id: cache-primes
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2
+            ~/repository
+          key: ${{ github.job }}-${{ hashFiles('**/pom.xml') }}
+      - name: Compile
+        run: ./mvnw compile
       - name: Checkstyle
         run: ./mvnw checkstyle:checkstyle
       - name: Archive checkstyle report
