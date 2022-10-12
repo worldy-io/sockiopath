@@ -27,16 +27,25 @@ public interface SockiopathServer {
             SimpleChannelInboundHandler<Object> messageHandler,
             SslContext sslCtx
     ) {
+        return basicChannelHandler("/websocket", 65536, messageHandler, sslCtx);
+    }
+
+    static ChannelInitializer<SocketChannel> basicChannelHandler(
+            String path,
+            int maxContentLength,
+            SimpleChannelInboundHandler<Object> messageHandler,
+            SslContext sslCtx
+    ) {
         return new ChannelInitializer<>() {
             @Override
             protected void initChannel(SocketChannel socketChannel) {
                 ChannelPipeline pipeline = socketChannel.pipeline();
-                if(sslCtx != null) {
+                if (sslCtx != null) {
                     pipeline.addLast(sslCtx.newHandler(socketChannel.alloc()));
                 }
                 pipeline.addLast(new HttpServerCodec());
-                pipeline.addLast(new HttpObjectAggregator(65536));
-                pipeline.addLast(new WebSocketServerProtocolHandler("/websocket", null, true));
+                pipeline.addLast(new HttpObjectAggregator(maxContentLength));
+                pipeline.addLast(new WebSocketServerProtocolHandler(path, null, true));
                 pipeline.addLast(messageHandler);
             }
         };
