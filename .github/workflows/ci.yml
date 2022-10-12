@@ -22,19 +22,11 @@ jobs:
           cache: maven
       - name: Validate
         run: ./mvnw validate
-        with:
-          cache: maven
       - name: Compile
         run: ./mvnw compile
-        with:
-          cache: maven
       - name: Verify
         run: ./mvnw verify
-        with:
-          cache: maven
       - name: Deploy
-        with:
-          cache: maven
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
