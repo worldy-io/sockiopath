@@ -38,7 +38,17 @@ class HandshakerChannelHandlerTest {
     }
 
     @Test
-    public void exceptionCaughtTest() {
+    public void exceptionCaughtAfterHandshakeCompleteTest() {
+        testExceptionCaught(true);
+    }
+
+    @Test
+    public void exceptionCaughtBeforeHandshakeCompleteTest() {
+        testExceptionCaught(false);
+    }
+
+
+    public void testExceptionCaught(boolean handshakeDone) {
 
         WebSocketClientHandshaker handshaker = Mockito.mock(WebSocketClientHandshaker.class);
         HandshakerChannelHandler handshakerChannelHandler = new HandshakerChannelHandler(handshaker, null);
@@ -48,13 +58,16 @@ class HandshakerChannelHandlerTest {
         Channel channel = Mockito.mock(Channel.class);
         Mockito.when(ctx.channel()).thenReturn(channel);
         ChannelPromise channelPromise = Mockito.mock(ChannelPromise.class);
-        Mockito.when(channelPromise.isDone()).thenReturn(false);
+        Mockito.when(channelPromise.isDone()).thenReturn(handshakeDone);
         Mockito.when(ctx.newPromise()).thenReturn(channelPromise);
 
         handshakerChannelHandler.handlerAdded(ctx);
         RuntimeException handshakeException = new RuntimeException("intentional exception");
         handshakerChannelHandler.exceptionCaught(ctx, handshakeException);
-        Mockito.verify(channelPromise, Mockito.times(1)).setFailure(handshakeException);
+
         Mockito.verify(ctx, Mockito.times(1)).close();
+        if (!handshakeDone) {
+            Mockito.verify(channelPromise, Mockito.times(1)).setFailure(handshakeException);
+        }
     }
 }
