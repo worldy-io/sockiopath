@@ -17,9 +17,9 @@ public class HandshakerChannelHandler extends SimpleChannelInboundHandler<Object
 
     private final WebSocketClientHandshaker handshaker;
     private ChannelPromise handshakeFuture;
-    private final SimpleChannelInboundHandler<WebSocketFrame> next;
+    private final SimpleChannelInboundHandler<Object> next;
 
-    public HandshakerChannelHandler(WebSocketClientHandshaker handshaker, SimpleChannelInboundHandler<WebSocketFrame> next) {
+    public HandshakerChannelHandler(WebSocketClientHandshaker handshaker, SimpleChannelInboundHandler<Object> next) {
         this.handshaker = handshaker;
         this.next = next;
     }
@@ -42,7 +42,7 @@ public class HandshakerChannelHandler extends SimpleChannelInboundHandler<Object
                 handshakeFuture.setFailure(e);
             }
         }
-        if(msg instanceof WebSocketFrame webSocketFrame) {
+        if (msg instanceof WebSocketFrame webSocketFrame) {
             next.channelRead(ctx, webSocketFrame.copy());
         }
     }

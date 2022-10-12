@@ -4,7 +4,7 @@ import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.worldy.sockiopath.CountDownLatchChannelHandler;
 import io.worldy.sockiopath.websocket.client.BootstrappedWebSocketClient;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
@@ -36,7 +35,7 @@ public class WebSocketServerTest {
         String expectedResponse = "test";
 
         CountDownLatch latch = new CountDownLatch(1);
-        Map<Long, TextWebSocketFrame> responseMap = new HashMap<>();
+        Map<Long, Object> responseMap = new HashMap<>();
 
         BootstrappedWebSocketClient client = new BootstrappedWebSocketClient(
                 "localhost",
@@ -58,7 +57,8 @@ public class WebSocketServerTest {
             throw new RuntimeException("Server took too long to respond.");
         }
 
-        assertEquals(expectedResponse, responseMap.get(1l).text());
+        TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) responseMap.get(1l);
+        assertEquals(expectedResponse, textWebSocketFrame.text());
     }
 
 
@@ -127,43 +127,11 @@ public class WebSocketServerTest {
         assertThat(exception.getCause(), instanceOf(BindException.class));
     }
 
-    public static class CountDownLatchChannelHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
-
-        private final CountDownLatch latch;
-        private final Map<Long, TextWebSocketFrame> responseMap;
-        private final Consumer<String> debug;
-
-        public CountDownLatchChannelHandler(CountDownLatch latch, Map<Long, TextWebSocketFrame> responseMap, Consumer<String> debug) {
-            this.latch = latch;
-            this.responseMap = responseMap;
-            this.debug = debug;
-        }
-
-        @Override
-        public void channelRead0(ChannelHandlerContext ctx, WebSocketFrame msg) throws Exception {
-
-            if (msg instanceof TextWebSocketFrame frame) {
-                debug.accept(frame.copy().text());
-                responseMap.put(latch.getCount(), frame.copy());
-                latch.countDown();
-            } else {
-                throw new RuntimeException("Unexpected message received!");
-            }
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            cause.printStackTrace();
-            ctx.close();
-        }
-    }
-
-
-    private static SimpleChannelInboundHandler<WebSocketFrame> channelEchoHandler() {
+    private static SimpleChannelInboundHandler<Object> channelEchoHandler() {
         return new SimpleChannelInboundHandler<>() {
             @Override
-            protected void channelRead0(ChannelHandlerContext channelHandlerContext, WebSocketFrame webSocketFrame) {
-                if (webSocketFrame instanceof TextWebSocketFrame textFrame) {
+            protected void channelRead0(ChannelHandlerContext channelHandlerContext, Object message) {
+                if (message instanceof TextWebSocketFrame textFrame) {
                     String textMessage = textFrame.text();
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(textMessage));
                 }

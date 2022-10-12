@@ -1,9 +1,12 @@
 package io.worldy.sockiopath.udp;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
+import io.worldy.sockiopath.CountDownLatchChannelHandler;
+import io.worldy.sockiopath.udp.client.BootstrappedUdpClient;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -11,6 +14,9 @@ import java.net.BindException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +40,43 @@ public class UdpServerTest {
         String expectedResponse = "hello";
         String response = request("hello", expectedResponse.getBytes().length, port);
         assertEquals(expectedResponse, response);
+    }
+
+    @Test
+    void bootstrappedClientTest() throws InterruptedException, ExecutionException {
+        UdpServer udpServer = new UdpServer(
+                getEchoChannelHandler(),
+                Executors.newFixedThreadPool(1),
+                0
+        );
+
+        int port = udpServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get().port();
+        String expectedResponse = "test";
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Map<Long, Object> responseMap = new HashMap<>();
+
+        BootstrappedUdpClient client = new BootstrappedUdpClient(
+                "localhost",
+                port,
+                new CountDownLatchChannelHandler(latch, responseMap, (message) -> {
+                }),
+                500
+        );
+
+        client.startup();
+
+        ByteBuf message = Unpooled.wrappedBuffer("test".getBytes());
+        if (!client.getChannel().writeAndFlush(message).await(1000, TimeUnit.MILLISECONDS)) {
+            throw new RuntimeException("Client took too long to send a message.");
+        }
+
+        if (!latch.await(1000, TimeUnit.MILLISECONDS)) {
+            throw new RuntimeException("Server took too long to respond.");
+        }
+
+        DatagramPacket datagramPacket = (DatagramPacket) responseMap.get(1l);
+        assertEquals(expectedResponse, UdpServer.byteBufferToString(datagramPacket.content().nioBuffer()));
     }
 
     @Test

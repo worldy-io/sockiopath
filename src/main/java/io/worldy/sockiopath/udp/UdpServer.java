@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -67,5 +68,19 @@ public class UdpServer {
     private int getPort(Channel channel) {
         SocketAddress socketAddress = channel.localAddress();
         return ((InetSocketAddress) socketAddress).getPort();
+    }
+
+    public static String byteBufferToString(ByteBuffer content) {
+        var capacity = content.capacity();
+        content.position(0);
+
+        StringBuilder builder = new StringBuilder();
+
+        while (content.position() < capacity) {
+            byte singleByte = content.get();
+            char character = (char) singleByte;
+            builder.append(character);
+        }
+        return builder.toString();
     }
 }

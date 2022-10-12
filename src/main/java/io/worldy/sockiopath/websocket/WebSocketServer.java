@@ -77,7 +77,7 @@ public class WebSocketServer {
     }
 
     public static ChannelInitializer<SocketChannel> basicChannelHandler(
-            SimpleChannelInboundHandler<WebSocketFrame> messageHandler,
+            SimpleChannelInboundHandler<Object> messageHandler,
             SslContext sslCtx
             ) {
         return new ChannelInitializer<>() {

@@ -15,7 +15,6 @@ import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslContext;
 
@@ -32,11 +31,11 @@ public final class BootstrappedWebSocketClient {
     protected final SslContext sslContext;
     protected final int handshakeTimeoutMillis;
     protected final NioEventLoopGroup workGroup;
-    protected final SimpleChannelInboundHandler<WebSocketFrame> messageHandler;
+    protected final SimpleChannelInboundHandler<Object> messageHandler;
 
     protected Channel channel;
 
-    public BootstrappedWebSocketClient(String host, int port, String path, SimpleChannelInboundHandler<WebSocketFrame> messageHandler, SslContext sslContext, int connectTimeoutMillis, int handshakeTimeoutMillis) {
+    public BootstrappedWebSocketClient(String host, int port, String path, SimpleChannelInboundHandler<Object> messageHandler, SslContext sslContext, int connectTimeoutMillis, int handshakeTimeoutMillis) {
         this.host = host;
         this.port = port;
         this.path = path;
