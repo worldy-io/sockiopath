@@ -20,22 +20,7 @@ jobs:
           java-version: 17
           distribution: 'adopt'
           cache: maven
-      - name: Cache local Maven repository
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-      - name: Validate
-        run: ./mvnw validate
-      - name: Compile
-        run: ./mvnw compile
-      - name: Verify
-        run: ./mvnw verify
-      - name: Deploy
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
+      - run: ./mvnw verify
+      - run: |
           echo "<settings><servers><server><id>github</id><username>OWNER</username><password>${GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
           ./mvnw deploy
