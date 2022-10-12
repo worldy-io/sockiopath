@@ -59,7 +59,7 @@ public class HandshakerChannelHandler extends SimpleChannelInboundHandler<Object
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+        logger.error("Exception during handshake", cause);
         if (!handshakeFuture.isDone()) {
             handshakeFuture.setFailure(cause);
         }

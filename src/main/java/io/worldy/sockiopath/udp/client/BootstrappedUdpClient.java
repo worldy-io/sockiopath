@@ -32,20 +32,15 @@ public final class BootstrappedUdpClient {
         return channel;
     }
 
-    public void startup() {
-
-        try {
-            Bootstrap b = new Bootstrap();
-            b.group(workGroup);
-            b.channel(NioDatagramChannel.class);
-            b.handler(messageHandler);
-            ChannelFuture channelFuture = b.connect(host, this.port);
-            if (!channelFuture.await(connectTimeoutMillis, TimeUnit.MILLISECONDS)) {
-                throw new RuntimeException("Client took too long to connect");
-            }
-            this.channel = channelFuture.channel();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    public void startup() throws InterruptedException {
+        Bootstrap b = new Bootstrap();
+        b.group(workGroup);
+        b.channel(NioDatagramChannel.class);
+        b.handler(messageHandler);
+        ChannelFuture channelFuture = b.connect(host, this.port);
+        if (!channelFuture.await(connectTimeoutMillis, TimeUnit.MILLISECONDS)) {
+            throw new RuntimeException("Client took too long to connect");
         }
+        this.channel = channelFuture.channel();
     }
 }

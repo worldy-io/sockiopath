@@ -50,7 +50,7 @@ public final class BootstrappedWebSocketClient {
         return channel;
     }
 
-    public void startup() {
+    public void startup() throws InterruptedException {
 
         try {
             String scheme = sslContext != null ? "wss://" : "ws://";
@@ -91,7 +91,7 @@ public final class BootstrappedWebSocketClient {
             }
 
             this.channel = channelFuture.channel();
-        } catch (URISyntaxException | InterruptedException e) {
+        } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }

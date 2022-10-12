@@ -1,19 +1,26 @@
 package io.worldy.sockiopath.websocket;
 
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
 import io.worldy.sockiopath.CountDownLatchChannelHandler;
 import io.worldy.sockiopath.SockiopathServer;
 import io.worldy.sockiopath.websocket.client.BootstrappedWebSocketClient;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.net.BindException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -26,28 +33,17 @@ public class WebSocketServerTest {
 
     @Test
     void startServerTest() throws InterruptedException, ExecutionException {
-        SockiopathServer webSocketServer = new WebSocketServer(
-                SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler),
-                Executors.newFixedThreadPool(1),
-                0
-        );
-
-        int port = webSocketServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get().port();
-        String expectedResponse = "test";
 
         CountDownLatch latch = new CountDownLatch(1);
         Map<Long, Object> responseMap = new HashMap<>();
+        String expectedResponse = "test";
 
-        BootstrappedWebSocketClient client = new BootstrappedWebSocketClient(
-                "localhost",
-                port,
-                "/websocket",
-                new CountDownLatchChannelHandler(latch, responseMap, (message) -> {
-                }),
-                null,
-                500,
-                500
-        );
+
+        SockiopathServer webSocketServer = getWebSocketServer(0, null);
+
+        int port = webSocketServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get().port();
+
+        BootstrappedWebSocketClient client = getClient(latch, responseMap, port, null);
 
         client.startup();
         if (!client.getChannel().writeAndFlush(new TextWebSocketFrame("test")).await(1000, TimeUnit.MILLISECONDS)) {
@@ -64,12 +60,34 @@ public class WebSocketServerTest {
 
 
     @Test
+    void startSslServerFailsWithMocksTest() throws InterruptedException, ExecutionException {
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Map<Long, Object> responseMap = new HashMap<>();
+        String expectedResponse = "test";
+
+        SslContext serverSslContext = Mockito.mock(SslContext.class);
+        SslHandler channelHandler = Mockito.mock(SslHandler.class);
+
+        Mockito.when(
+                serverSslContext.newHandler(Mockito.any(ByteBufAllocator.class), Mockito.any(ExecutorService.class))
+        ).thenReturn(channelHandler);
+
+        SockiopathServer webSocketServer = getWebSocketServer(0, serverSslContext);
+
+        int port = webSocketServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get().port();
+
+        BootstrappedWebSocketClient client = getClient(latch, responseMap, port, Mockito.mock(SslContext.class));
+
+        ChannelException channelException = assertThrows(ChannelException.class, client::startup);
+
+        assertEquals("Handshake took too long", channelException.getMessage());
+    }
+
+
+    @Test
     void connectTimeoutTest() throws InterruptedException, ExecutionException {
-        SockiopathServer webSocketServer = new WebSocketServer(
-                SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler),
-                Executors.newFixedThreadPool(1),
-                0
-        );
+        SockiopathServer webSocketServer = getWebSocketServer(0, null);
 
         int port = webSocketServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get().port();
 
@@ -90,11 +108,7 @@ public class WebSocketServerTest {
 
     @Test
     void handshakeTimeoutTest() throws InterruptedException, ExecutionException {
-        SockiopathServer webSocketServer = new WebSocketServer(
-                SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler),
-                Executors.newFixedThreadPool(1),
-                0
-        );
+        SockiopathServer webSocketServer = getWebSocketServer(0, null);
 
         int port = webSocketServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get().port();
 
@@ -115,17 +129,40 @@ public class WebSocketServerTest {
 
     @Test
     void bindPortException() {
-        SockiopathServer webSocketServer = new WebSocketServer(
-                SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler),
-                Executors.newFixedThreadPool(1),
-                1
-        );
+        SockiopathServer webSocketServer = getWebSocketServer(1, null);
 
         Exception exception = assertThrows(ExecutionException.class, () -> {
             webSocketServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get();
         });
 
         assertThat(exception.getCause(), instanceOf(BindException.class));
+    }
+
+    private static WebSocketServer getWebSocketServer(int port, SslContext serverSslContext) {
+        final ChannelInitializer<SocketChannel> basicWebSocketChannelHandler;
+        if (serverSslContext == null) {
+            basicWebSocketChannelHandler = SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler);
+        } else {
+            basicWebSocketChannelHandler = SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler, serverSslContext);
+        }
+        return new WebSocketServer(
+                basicWebSocketChannelHandler,
+                Executors.newFixedThreadPool(1),
+                port
+        );
+    }
+
+    private static BootstrappedWebSocketClient getClient(CountDownLatch latch, Map<Long, Object> responseMap, int port, SslContext clientSslContext) {
+        return new BootstrappedWebSocketClient(
+                "localhost",
+                port,
+                "/websocket",
+                new CountDownLatchChannelHandler(latch, responseMap, (message) -> {
+                }),
+                clientSslContext,
+                500,
+                500
+        );
     }
 
     private static SimpleChannelInboundHandler<Object> channelEchoHandler() {

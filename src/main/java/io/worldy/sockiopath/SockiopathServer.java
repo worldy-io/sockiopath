@@ -14,6 +14,8 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public interface SockiopathServer {
@@ -53,12 +55,13 @@ public interface SockiopathServer {
             List<Supplier<SimpleChannelInboundHandler<?>>> messageHandlers,
             SslContext sslCtx
     ) {
+        ExecutorService sslChannelExecutor = Executors.newFixedThreadPool(1);
         return new ChannelInitializer<>() {
             @Override
             protected void initChannel(SocketChannel socketChannel) {
                 ChannelPipeline pipeline = socketChannel.pipeline();
                 if (sslCtx != null) {
-                    pipeline.addLast(sslCtx.newHandler(socketChannel.alloc()));
+                    pipeline.addLast(sslCtx.newHandler(socketChannel.alloc(), sslChannelExecutor));
                 }
                 pipeline.addLast(new HttpServerCodec());
                 pipeline.addLast(new HttpObjectAggregator(maxContentLength));
