@@ -19,10 +19,9 @@ jobs:
         with:
           java-version: 17
           distribution: 'adopt'
-          cache: maven
-      - run: ./mvnw validate
-      - run: ./mvnw compile
-      - run: ./mvnw verify
+          cache: 'maven'
+      - name: Verify
+        run: ./mvnw verify --file pom.xml
       - name: Deploy
         run: |
           echo "<settings><servers><server><id>github</id><username>OWNER</username><password>${GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
