@@ -18,7 +18,13 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 17
-      - name: Build
+      - name: Validate
+        run: ./mvnw validate
+      - name: Compile
+        run: ./mvnw compile
+      - name: Verify
+        run: ./mvnw verify
+      - name: Deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
