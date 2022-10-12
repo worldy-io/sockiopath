@@ -15,6 +15,8 @@
     <quarkus.platform.version>2.13.1.Final</quarkus.platform.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
+    <checkstyle.version>3.2.0</checkstyle.version>
+    <checkstyle.config.location>config/checkstyle/checkstyle.xml</checkstyle.config.location>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -116,8 +118,38 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${checkstyle.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${checkstyle.version}</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>checkstyle</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
+
   <profiles>
     <profile>
       <id>native</id>
@@ -135,7 +167,7 @@
 
   <distributionManagement>
     <repository>
-      <id>worldy-io</id>
+      <id>github</id>
       <name>sockiopath</name>
       <url>https://maven.pkg.github.com/worldy-io/sockiopath</url>
     </repository>
