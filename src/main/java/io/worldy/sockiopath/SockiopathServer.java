@@ -12,9 +12,14 @@ import io.netty.handler.ssl.SslContext;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 public interface SockiopathServer {
+
+    int DEFAULT_MAX_CONTENT_LENGTH = 65536;
+    String DEFAULT_WEB_SOCKET_PATH = "/websocket";
 
     CompletableFuture<StartServerResult> start();
 
@@ -23,17 +28,29 @@ public interface SockiopathServer {
         return ((InetSocketAddress) socketAddress).getPort();
     }
 
-    static ChannelInitializer<SocketChannel> basicChannelHandler(
-            SimpleChannelInboundHandler<Object> messageHandler,
-            SslContext sslCtx
+    static ChannelInitializer<SocketChannel> basicWebSocketChannelHandler(
+            Supplier<SimpleChannelInboundHandler<?>> messageHandlerSupplier
     ) {
-        return basicChannelHandler("/websocket", 65536, messageHandler, sslCtx);
+        return basicWebSocketChannelHandler(messageHandlerSupplier, null);
     }
 
-    static ChannelInitializer<SocketChannel> basicChannelHandler(
+    static ChannelInitializer<SocketChannel> basicWebSocketChannelHandler(
+            Supplier<SimpleChannelInboundHandler<?>> messageHandlerSupplier, SslContext sslCtx
+    ) {
+        return basicWebSocketChannelHandler(List.of(messageHandlerSupplier), sslCtx);
+    }
+
+    static ChannelInitializer<SocketChannel> basicWebSocketChannelHandler(
+            List<Supplier<SimpleChannelInboundHandler<?>>> messageHandlers,
+            SslContext sslCtx
+    ) {
+        return basicWebSocketChannelHandler(DEFAULT_WEB_SOCKET_PATH, DEFAULT_MAX_CONTENT_LENGTH, messageHandlers, sslCtx);
+    }
+
+    static ChannelInitializer<SocketChannel> basicWebSocketChannelHandler(
             String path,
             int maxContentLength,
-            SimpleChannelInboundHandler<Object> messageHandler,
+            List<Supplier<SimpleChannelInboundHandler<?>>> messageHandlers,
             SslContext sslCtx
     ) {
         return new ChannelInitializer<>() {
@@ -46,7 +63,7 @@ public interface SockiopathServer {
                 pipeline.addLast(new HttpServerCodec());
                 pipeline.addLast(new HttpObjectAggregator(maxContentLength));
                 pipeline.addLast(new WebSocketServerProtocolHandler(path, null, true));
-                pipeline.addLast(messageHandler);
+                messageHandlers.forEach(messageHandlerSupplier -> pipeline.addLast(messageHandlerSupplier.get()));
             }
         };
     }

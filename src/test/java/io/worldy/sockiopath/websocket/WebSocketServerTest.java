@@ -27,7 +27,7 @@ public class WebSocketServerTest {
     @Test
     void startServerTest() throws InterruptedException, ExecutionException {
         SockiopathServer webSocketServer = new WebSocketServer(
-                SockiopathServer.basicChannelHandler(channelEchoHandler(), null),
+                SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler),
                 Executors.newFixedThreadPool(1),
                 0
         );
@@ -66,7 +66,7 @@ public class WebSocketServerTest {
     @Test
     void connectTimeoutTest() throws InterruptedException, ExecutionException {
         SockiopathServer webSocketServer = new WebSocketServer(
-                SockiopathServer.basicChannelHandler(channelEchoHandler(), null),
+                SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler),
                 Executors.newFixedThreadPool(1),
                 0
         );
@@ -91,7 +91,7 @@ public class WebSocketServerTest {
     @Test
     void handshakeTimeoutTest() throws InterruptedException, ExecutionException {
         SockiopathServer webSocketServer = new WebSocketServer(
-                SockiopathServer.basicChannelHandler(channelEchoHandler(), null),
+                SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler),
                 Executors.newFixedThreadPool(1),
                 0
         );
@@ -116,7 +116,7 @@ public class WebSocketServerTest {
     @Test
     void bindPortException() {
         SockiopathServer webSocketServer = new WebSocketServer(
-                SockiopathServer.basicChannelHandler(channelEchoHandler(), null),
+                SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler),
                 Executors.newFixedThreadPool(1),
                 1
         );
