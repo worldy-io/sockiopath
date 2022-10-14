@@ -7,16 +7,16 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WebSocketSessionHandler extends SimpleChannelInboundHandler<Object> {
+public class WebSocketSessionHandler<T extends WebSocketSession> extends SimpleChannelInboundHandler<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(WebSocketSessionHandler.class);
     private static final String TEXT_COMMAND_JOIN = "join";
 
     private static final String DELIMINATOR = "|";
     private static final String TEXT_RESPONSE_PART_SESSION = "session" + DELIMINATOR;
-    private final SessionStore<WebSocketSession> sessionStore;
+    private final SessionStore<T> sessionStore;
 
-    public WebSocketSessionHandler(SessionStore<WebSocketSession> sessionStore) {
+    public WebSocketSessionHandler(SessionStore<T> sessionStore) {
         this.sessionStore = sessionStore;
     }
 
@@ -51,7 +51,7 @@ public class WebSocketSessionHandler extends SimpleChannelInboundHandler<Object>
     private void createSession(ChannelHandlerContext ctx) {
         String sessionId = getChannelId(ctx.channel());
         logger.debug("createSession {}", sessionId);
-        sessionStore.put().apply(sessionId, new WebSocketSession(ctx));
+        sessionStore.put().apply(sessionId, sessionStore.createSession(ctx));
     }
 
     private void removeSession(ChannelHandlerContext ctx) {
@@ -75,4 +75,5 @@ public class WebSocketSessionHandler extends SimpleChannelInboundHandler<Object>
     private String getChannelShortId(Channel channel) {
         return channel.id().asShortText();
     }
+
 }

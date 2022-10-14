@@ -1,5 +1,7 @@
 package io.worldy.sockiopath.websocket.session;
 
+import io.netty.channel.ChannelHandlerContext;
+
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -15,4 +17,6 @@ public interface SessionStore<T extends WebSocketSession> {
     Supplier<Integer> size();
 
     Supplier<Set<String>> keySet();
+
+    T createSession(ChannelHandlerContext ctx);
 }
