@@ -1,9 +1,12 @@
-package io.worldy.sockiopath.websocket.session;
+package io.worldy.sockiopath.websocket;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.worldy.sockiopath.session.MapBackedSessionStore;
+import io.worldy.sockiopath.session.SessionStore;
+import io.worldy.sockiopath.session.SockiopathSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,13 +19,13 @@ public class WebSocketSessionHandler extends SimpleChannelInboundHandler<Object>
 
     private static final String DELIMINATOR = "|";
     private static final String TEXT_RESPONSE_PART_SESSION = "session" + DELIMINATOR;
-    private final SessionStore<WebSocketSession> sessionStore;
+    private final SessionStore<SockiopathSession> sessionStore;
 
-    public WebSocketSessionHandler(SessionStore<WebSocketSession> sessionStore) {
+    public WebSocketSessionHandler(SessionStore<SockiopathSession> sessionStore) {
         this.sessionStore = sessionStore;
     }
 
-    public WebSocketSessionHandler(Map<String, WebSocketSession> sessionMap) {
+    public WebSocketSessionHandler(Map<String, SockiopathSession> sessionMap) {
         this(new MapBackedSessionStore(sessionMap));
     }
 

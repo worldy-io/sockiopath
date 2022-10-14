@@ -1,4 +1,4 @@
-package io.worldy.sockiopath.websocket.session;
+package io.worldy.sockiopath.session;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -7,7 +7,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public interface SessionStore<T extends WebSocketSession> {
+public interface SessionStore<T extends SockiopathSession> {
     Function<String, T> get();
 
     BiFunction<String, T, T> put();
@@ -18,12 +18,12 @@ public interface SessionStore<T extends WebSocketSession> {
 
     Supplier<Set<String>> keySet();
 
-    default WebSocketSession createSession(ChannelHandlerContext ctx) {
-        return new WebSocketSessionImpl(ctx);
+    default SockiopathSession createSession(ChannelHandlerContext ctx) {
+        return new SockiopathSessionImpl(ctx);
     }
 
-    class WebSocketSessionImpl extends WebSocketSession {
-        WebSocketSessionImpl(ChannelHandlerContext context) {
+    class SockiopathSessionImpl extends SockiopathSession {
+        SockiopathSessionImpl(ChannelHandlerContext context) {
             super(context);
         }
     }

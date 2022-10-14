@@ -1,4 +1,4 @@
-package io.worldy.sockiopath.websocket.session;
+package io.worldy.sockiopath.session;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -9,15 +9,15 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class MapBackedSessionStore implements SessionStore<WebSocketSession> {
-    private final Map<String, WebSocketSession> store;
-    private final Function<String, WebSocketSession> get;
-    private final BiFunction<String, WebSocketSession, WebSocketSession> put;
-    private final Function<String, WebSocketSession> remove;
+public class MapBackedSessionStore implements SessionStore<SockiopathSession> {
+    private final Map<String, SockiopathSession> store;
+    private final Function<String, SockiopathSession> get;
+    private final BiFunction<String, SockiopathSession, SockiopathSession> put;
+    private final Function<String, SockiopathSession> remove;
     private final Supplier<Integer> size;
     private final Supplier<Set<String>> keySet;
 
-    public MapBackedSessionStore(Map<String, WebSocketSession> store) {
+    public MapBackedSessionStore(Map<String, SockiopathSession> store) {
         this.store = Optional.ofNullable(store).orElseGet(Map::of);
         this.get = this.store::get;
         this.put = this.store::put;
@@ -28,17 +28,17 @@ public class MapBackedSessionStore implements SessionStore<WebSocketSession> {
 
 
     @Override
-    public Function<String, WebSocketSession> get() {
+    public Function<String, SockiopathSession> get() {
         return get;
     }
 
     @Override
-    public BiFunction<String, WebSocketSession, WebSocketSession> put() {
+    public BiFunction<String, SockiopathSession, SockiopathSession> put() {
         return put;
     }
 
     @Override
-    public Function<String, WebSocketSession> remove() {
+    public Function<String, SockiopathSession> remove() {
         return remove;
     }
 
@@ -54,7 +54,7 @@ public class MapBackedSessionStore implements SessionStore<WebSocketSession> {
     }
 
     @Override
-    public WebSocketSession createSession(ChannelHandlerContext ctx) {
-        return new WebSocketSessionImpl(ctx);
+    public SockiopathSession createSession(ChannelHandlerContext ctx) {
+        return new SockiopathSessionImpl(ctx);
     }
 }

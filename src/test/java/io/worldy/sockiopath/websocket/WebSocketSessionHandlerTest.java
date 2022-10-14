@@ -1,9 +1,10 @@
-package io.worldy.sockiopath.websocket.session;
+package io.worldy.sockiopath.websocket;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.worldy.sockiopath.session.SockiopathSession;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -18,7 +19,7 @@ class WebSocketSessionHandlerTest {
     @Test
     void channelRead0() throws Exception {
 
-        Map<String, WebSocketSession> sessionStore = new HashMap<>();
+        Map<String, SockiopathSession> sessionStore = new HashMap<>();
         WebSocketSessionHandler webSocketSessionHandler = new WebSocketSessionHandler(sessionStore);
 
         ChannelHandlerContext ctx1 = mockContext(1);

@@ -1,11 +1,11 @@
-package io.worldy.sockiopath.websocket.session;
+package io.worldy.sockiopath.session;
 
 import io.netty.channel.ChannelHandlerContext;
 
-public class WebSocketSession {
+public class SockiopathSession {
     private final ChannelHandlerContext context;
 
-    public WebSocketSession(ChannelHandlerContext context) {
+    public SockiopathSession(ChannelHandlerContext context) {
         this.context = context;
     }
 
