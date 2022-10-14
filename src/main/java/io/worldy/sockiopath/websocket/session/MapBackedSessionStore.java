@@ -57,11 +57,4 @@ public class MapBackedSessionStore implements SessionStore<WebSocketSession> {
     public WebSocketSession createSession(ChannelHandlerContext ctx) {
         return new WebSocketSessionImpl(ctx);
     }
-
-    private static class WebSocketSessionImpl extends WebSocketSession {
-        WebSocketSessionImpl(ChannelHandlerContext context) {
-            super(context);
-        }
-    }
-
 }

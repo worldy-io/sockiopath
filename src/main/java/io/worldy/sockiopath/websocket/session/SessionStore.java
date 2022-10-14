@@ -18,5 +18,13 @@ public interface SessionStore<T extends WebSocketSession> {
 
     Supplier<Set<String>> keySet();
 
-    T createSession(ChannelHandlerContext ctx);
+    default WebSocketSession createSession(ChannelHandlerContext ctx) {
+        return new WebSocketSessionImpl(ctx);
+    }
+
+    class WebSocketSessionImpl extends WebSocketSession {
+        WebSocketSessionImpl(ChannelHandlerContext context) {
+            super(context);
+        }
+    }
 }

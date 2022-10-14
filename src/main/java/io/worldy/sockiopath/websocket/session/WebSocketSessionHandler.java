@@ -7,17 +7,23 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WebSocketSessionHandler<T extends WebSocketSession> extends SimpleChannelInboundHandler<Object> {
+import java.util.Map;
+
+public class WebSocketSessionHandler extends SimpleChannelInboundHandler<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(WebSocketSessionHandler.class);
     private static final String TEXT_COMMAND_JOIN = "join";
 
     private static final String DELIMINATOR = "|";
     private static final String TEXT_RESPONSE_PART_SESSION = "session" + DELIMINATOR;
-    private final SessionStore<T> sessionStore;
+    private final SessionStore<WebSocketSession> sessionStore;
 
-    public WebSocketSessionHandler(SessionStore<T> sessionStore) {
+    public WebSocketSessionHandler(SessionStore<WebSocketSession> sessionStore) {
         this.sessionStore = sessionStore;
+    }
+
+    public WebSocketSessionHandler(Map<String, WebSocketSession> sessionMap) {
+        this(new MapBackedSessionStore(sessionMap));
     }
 
     @Override
