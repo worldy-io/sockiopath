@@ -5,12 +5,12 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public interface SessionStore {
-    Function<String, WebSocketSession> get();
+public interface SessionStore<T extends WebSocketSession> {
+    Function<String, T> get();
 
-    BiFunction<String, WebSocketSession, WebSocketSession> put();
+    BiFunction<String, T, T> put();
 
-    Function<String, WebSocketSession> remove();
+    Function<String, T> remove();
 
     Supplier<Integer> size();
 

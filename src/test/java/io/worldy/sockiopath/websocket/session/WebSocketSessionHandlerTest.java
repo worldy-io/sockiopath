@@ -17,7 +17,7 @@ class WebSocketSessionHandlerTest {
     @Test
     void channelRead0() throws Exception {
 
-        MapBackedSessionStore sessionStore = new MapBackedSessionStore(new HashMap<>());
+        MapBackedSessionStore<WebSocketSession> sessionStore = new MapBackedSessionStore<>(new HashMap<>());
         WebSocketSessionHandler webSocketSessionHandler = new WebSocketSessionHandler(sessionStore);
 
         ChannelHandlerContext ctx1 = mockContext(1);
