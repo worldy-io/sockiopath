@@ -1,7 +1,5 @@
 package io.worldy.sockiopath.session;
 
-import io.netty.channel.ChannelHandlerContext;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -51,10 +49,5 @@ public class MapBackedSessionStore implements SessionStore<SockiopathSession> {
     @Override
     public Supplier<Set<String>> keySet() {
         return this.keySet;
-    }
-
-    @Override
-    public SockiopathSession createSession(ChannelHandlerContext ctx) {
-        return new SockiopathSessionImpl(ctx);
     }
 }

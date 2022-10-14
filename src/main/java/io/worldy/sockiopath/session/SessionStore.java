@@ -19,12 +19,6 @@ public interface SessionStore<T extends SockiopathSession> {
     Supplier<Set<String>> keySet();
 
     default SockiopathSession createSession(ChannelHandlerContext ctx) {
-        return new SockiopathSessionImpl(ctx);
-    }
-
-    class SockiopathSessionImpl extends SockiopathSession {
-        SockiopathSessionImpl(ChannelHandlerContext context) {
-            super(context);
-        }
+        return new SockiopathSession(ctx);
     }
 }

@@ -19,7 +19,7 @@ public class WebSocketSessionHandler extends SimpleChannelInboundHandler<Object>
 
     private static final String DELIMINATOR = "|";
     private static final String TEXT_RESPONSE_PART_SESSION = "session" + DELIMINATOR;
-    private final SessionStore<SockiopathSession> sessionStore;
+    final SessionStore<SockiopathSession> sessionStore;
 
     public WebSocketSessionHandler(SessionStore<SockiopathSession> sessionStore) {
         this.sessionStore = sessionStore;
