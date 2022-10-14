@@ -28,7 +28,7 @@ public class UdpServer implements SockiopathServer {
     private final int port;
 
     private GenericFutureListener<Future<? super Void>> onClose;
-
+    private int actualPort;
 
     public UdpServer(
             ChannelHandler channelHandler,
@@ -40,6 +40,7 @@ public class UdpServer implements SockiopathServer {
         this.port = port;
     }
 
+    @Override
     public CompletableFuture<StartServerResult> start() {
         CompletableFuture<StartServerResult> future = new CompletableFuture<>();
         executor.submit(() -> {
@@ -53,7 +54,8 @@ public class UdpServer implements SockiopathServer {
 
                 Channel channel = bootstrap.bind(port).sync().channel();
                 ChannelFuture closeFuture = channel.closeFuture();
-                future.complete(new StartServerResult(SockiopathServer.getPort(channel), closeFuture));
+                actualPort = SockiopathServer.getPort(channel);
+                future.complete(new StartServerResult(actualPort, closeFuture));
                 closeFuture.await();
             } catch (Exception ex) {
                 future.completeExceptionally(ex);
@@ -62,6 +64,11 @@ public class UdpServer implements SockiopathServer {
             }
         });
         return future;
+    }
+
+    @Override
+    public int actualPort() {
+        return actualPort;
     }
 
     public static String byteBufferToString(ByteBuffer content) {

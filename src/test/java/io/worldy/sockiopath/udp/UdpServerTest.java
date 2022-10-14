@@ -40,6 +40,7 @@ public class UdpServerTest {
         String expectedResponse = "hello";
         String response = request("hello", expectedResponse.getBytes().length, port);
         assertEquals(expectedResponse, response);
+        assertEquals(port, udpServer.actualPort());
     }
 
     @Test

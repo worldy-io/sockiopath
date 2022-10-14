@@ -25,6 +25,8 @@ public interface SockiopathServer {
 
     CompletableFuture<StartServerResult> start();
 
+    int actualPort();
+
     static int getPort(Channel channel) {
         SocketAddress socketAddress = channel.localAddress();
         return ((InetSocketAddress) socketAddress).getPort();

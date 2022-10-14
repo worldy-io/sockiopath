@@ -56,6 +56,7 @@ public class WebSocketServerTest {
 
         TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) responseMap.get(1l);
         assertEquals(expectedResponse, textWebSocketFrame.text());
+        assertEquals(port, webSocketServer.actualPort());
     }
 
 

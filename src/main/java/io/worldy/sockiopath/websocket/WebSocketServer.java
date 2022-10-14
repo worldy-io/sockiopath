@@ -24,6 +24,7 @@ public class WebSocketServer implements SockiopathServer {
     private final ChannelHandler channelHandler;
     private final ExecutorService executor;
     final int port;
+    private int actualPort;
 
     public WebSocketServer(
             ChannelHandler channelHandler,
@@ -35,6 +36,7 @@ public class WebSocketServer implements SockiopathServer {
         this.port = port;
     }
 
+    @Override
     public CompletableFuture<StartServerResult> start() {
         CompletableFuture<StartServerResult> future = new CompletableFuture<>();
         executor.submit(() -> {
@@ -49,7 +51,8 @@ public class WebSocketServer implements SockiopathServer {
 
                 Channel channel = b.bind(port).sync().channel();
                 ChannelFuture closeFuture = channel.closeFuture();
-                future.complete(new StartServerResult(SockiopathServer.getPort(channel), closeFuture));
+                actualPort = SockiopathServer.getPort(channel);
+                future.complete(new StartServerResult(actualPort, closeFuture));
                 closeFuture.await();
             } catch (Exception e) {
                 future.completeExceptionally(e);
@@ -59,6 +62,11 @@ public class WebSocketServer implements SockiopathServer {
             }
         });
         return future;
+    }
+
+    @Override
+    public int actualPort() {
+        return actualPort;
     }
 
 }
