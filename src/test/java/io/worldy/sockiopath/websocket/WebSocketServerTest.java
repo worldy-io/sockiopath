@@ -166,7 +166,7 @@ public class WebSocketServerTest {
         );
     }
 
-    private static SimpleChannelInboundHandler<Object> channelEchoHandler() {
+    public static SimpleChannelInboundHandler<Object> channelEchoHandler() {
         return new SimpleChannelInboundHandler<>() {
             @Override
             protected void channelRead0(ChannelHandlerContext channelHandlerContext, Object message) {
