@@ -8,11 +8,25 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-class HandshakerChannelHandlerTest {
+import java.util.Map;
 
+@QuarkusTest
+@TestProfile(HandshakerChannelHandlerTest.BuildTimeValueChangeTestProfile.class)
+class HandshakerChannelHandlerTest {
+    public static class BuildTimeValueChangeTestProfile implements QuarkusTestProfile {
+        @Override
+        public Map<String, String> getConfigOverrides() {
+            return Map.of(
+                    "quarkus.log.category.\"io.worldy.sockiopath.websocket.client.HandshakerChannelHandler\".level", "OFF"
+            );
+        }
+    }
     @Test
     void channelReadHandshakeFailTest() throws Exception {
         WebSocketClientHandshaker handshaker = Mockito.mock(WebSocketClientHandshaker.class);
