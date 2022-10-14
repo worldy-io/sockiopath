@@ -12,20 +12,20 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public class WebSocketSessionHandler extends SimpleChannelInboundHandler<Object> {
+public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketSessionHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketHandler.class);
     private static final String TEXT_COMMAND_JOIN = "join";
 
     private static final String DELIMINATOR = "|";
     private static final String TEXT_RESPONSE_PART_SESSION = "session" + DELIMINATOR;
     final SessionStore<SockiopathSession> sessionStore;
 
-    public WebSocketSessionHandler(SessionStore<SockiopathSession> sessionStore) {
+    public WebSocketHandler(SessionStore<SockiopathSession> sessionStore) {
         this.sessionStore = sessionStore;
     }
 
-    public WebSocketSessionHandler(Map<String, SockiopathSession> sessionMap) {
+    public WebSocketHandler(Map<String, SockiopathSession> sessionMap) {
         this(new MapBackedSessionStore(sessionMap));
     }
 
