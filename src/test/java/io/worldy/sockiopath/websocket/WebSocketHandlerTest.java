@@ -45,7 +45,7 @@ class WebSocketHandlerTest {
         assertEquals(1, webSocketHandler.sessionStore.size().get());
         webSocketHandler.channelRead0(ctx1, new TextWebSocketFrame("test1-1"));
 
-        ChannelHandlerContext sessionContext1 = webSocketHandler.sessionStore.get().apply("long1").getContext();
+        ChannelHandlerContext sessionContext1 = webSocketHandler.sessionStore.get().apply("long1").getWebSocketContext();
         assertEquals(ctx1, sessionContext1);
         Mockito.verify(sessionContext1, Mockito.times(1)).writeAndFlush(Mockito.any());
 
@@ -55,7 +55,7 @@ class WebSocketHandlerTest {
         assertEquals(2, webSocketHandler.sessionStore.size().get());
         webSocketHandler.channelRead0(ctx2, new TextWebSocketFrame("test2-1"));
 
-        ChannelHandlerContext sessionContext2 = webSocketHandler.sessionStore.get().apply("long2").getContext();
+        ChannelHandlerContext sessionContext2 = webSocketHandler.sessionStore.get().apply("long2").getWebSocketContext();
         assertEquals(ctx2, sessionContext2);
         Mockito.verify(sessionContext2, Mockito.times(1)).writeAndFlush(Mockito.any());
         Mockito.verify(sessionContext1, Mockito.times(2)).writeAndFlush(Mockito.any());

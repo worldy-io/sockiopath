@@ -48,7 +48,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
                 sessionStore.keySet().get().forEach((key) -> {
                     boolean isSameSession = key.equals(sessionId);
                     String prefix = isSameSession ? "" : (sessionShortId + ": ");
-                    sessionStore.get().apply(key).getContext().writeAndFlush(new TextWebSocketFrame(prefix + textMessage));
+                    sessionStore.get().apply(key).getWebSocketContext().writeAndFlush(new TextWebSocketFrame(prefix + textMessage));
                 });
             }
         } else {

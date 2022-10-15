@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.worldy</groupId>
   <artifactId>sockiopath</artifactId>
-  <version>0.0.9-SNAPSHOT</version>
+  <version>0.0.9</version>
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
     <maven.compiler.release>17</maven.compiler.release>
@@ -160,12 +160,12 @@
                     <limit>
                       <counter>LINE</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.9</minimum>
+                      <minimum>0.98</minimum>
                     </limit>
                     <limit>
                       <counter>BRANCH</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.9</minimum>
+                      <minimum>0.98</minimum>
                     </limit>
                   </limits>
                 </rule>

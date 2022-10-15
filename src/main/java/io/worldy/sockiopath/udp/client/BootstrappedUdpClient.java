@@ -42,5 +42,6 @@ public final class BootstrappedUdpClient {
             throw new RuntimeException("Client took too long to connect");
         }
         this.channel = channelFuture.channel();
+
     }
 }

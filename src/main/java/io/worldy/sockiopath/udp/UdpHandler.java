@@ -38,6 +38,8 @@ public class UdpHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 
     private final Logger logger;
 
+    private ChannelHandlerContext channelHandlerContext;
+
     public UdpHandler(
             SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers,
@@ -66,6 +68,12 @@ public class UdpHandler extends SimpleChannelInboundHandler<DatagramPacket> {
     }
 
     @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        super.channelRegistered(ctx);
+        this.channelHandlerContext = ctx;
+    }
+
+    @Override
     public void channelRead0(ChannelHandlerContext context, DatagramPacket packet) {
         messageParser.apply(packet.content().copy().nioBuffer())
                 .ifPresentOrElse(
@@ -87,10 +95,13 @@ public class UdpHandler extends SimpleChannelInboundHandler<DatagramPacket> {
     protected void process(SockiopathMessage sockiopathMessage, ChannelHandlerContext context, DatagramPacket packet) {
         InetSocketAddress sender = packet.sender();
 
-        if (sessionStore.get().apply(sockiopathMessage.sessionId()) == null) {
+        SockiopathSession session = sessionStore.get().apply(sockiopathMessage.sessionId());
+        if (session == null) {
             logger.debug(NO_SESSION_ERROR_MESSAGE.formatted(sender.getAddress().getCanonicalHostName()));
             return;
         }
+        session.withUdpSocketAddress(packet.sender());
+        session.withUdpContext(context);
 
         Optional.ofNullable(messageHandlers.get(sockiopathMessage.address()))
                 .ifPresentOrElse(
@@ -123,5 +134,9 @@ public class UdpHandler extends SimpleChannelInboundHandler<DatagramPacket> {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         logger.error("Error handling Udp connection: " + cause.getMessage(), cause);
         // We don't close the channel because we can keep serving requests.
+    }
+
+    public ChannelHandlerContext getChannelHandlerContext() {
+        return channelHandlerContext;
     }
 }

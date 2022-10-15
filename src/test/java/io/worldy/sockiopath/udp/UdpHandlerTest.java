@@ -23,6 +23,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class UdpHandlerTest {
 
     @Test
@@ -38,6 +40,8 @@ class UdpHandlerTest {
 
         udpHandler.channelRead0(context, packet);
         Mockito.verify(context, Mockito.times(1)).writeAndFlush(Mockito.any());
+        assertEquals(sender, udpHandler.sessionStore.get().apply("sessionId-a").getUdpSocketAddress());
+        assertEquals(context, udpHandler.sessionStore.get().apply("sessionId-a").getUdpContext());
     }
 
     @Test
@@ -122,6 +126,16 @@ class UdpHandlerTest {
         udpHandler.channelRead0(context, packet);
         verifyNoWritesOrFlushes(context);
         Mockito.verify(loggerMock, Mockito.times(1)).error(expectedDebugLog);
+    }
+
+    @Test
+    void channelRegistered() throws Exception {
+        ChannelHandlerContext context = Mockito.mock(ChannelHandlerContext.class);
+        UdpHandler handler = getHandler(context);
+        handler.channelRegistered(context);
+        Mockito.verify(context, Mockito.times(1)).fireChannelRegistered();
+        assertEquals(context, handler.getChannelHandlerContext());
+        verifyNoWrites(context);
     }
 
     @Test
