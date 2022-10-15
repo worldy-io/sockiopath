@@ -4,8 +4,8 @@ package io.worldy.sockiopath.websocket.ui;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.quarkus.test.junit.QuarkusTest;
 import io.worldy.sockiopath.SockiopathServer;
+import io.worldy.sockiopath.SockiopathServerTest;
 import io.worldy.sockiopath.websocket.WebSocketServer;
-import io.worldy.sockiopath.websocket.WebSocketServerTest;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
@@ -102,7 +102,7 @@ class WebSocketServerVerticalHtmlTest {
     static WebSocketServer getWebSocketServer(int port, String htmlTemplatePath) {
         List<Supplier<SimpleChannelInboundHandler<?>>> messageHandlerSupplier = List.of(
                 () -> new WebSocketIndexPageHandler(SockiopathServer.DEFAULT_WEB_SOCKET_PATH, htmlTemplatePath),
-                WebSocketServerTest::channelEchoHandler
+                SockiopathServerTest::channelEchoWebSocketHandler
         );
 
         return new WebSocketServer(

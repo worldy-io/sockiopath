@@ -112,15 +112,11 @@ public interface SockiopathServer {
         getLogger().info("shutting down ExecutorService pool...");
         pool.shutdown(); // Disable new tasks from being submitted
         try {
-            // Wait a while for existing tasks to terminate
-            if (!pool.awaitTermination(getShutdownTimeoutMillis(), TimeUnit.MILLISECONDS)) {
-                pool.shutdownNow(); // Cancel currently executing tasks
-                // Wait a while for tasks to respond to being cancelled
-                if (!pool.awaitTermination(getShutdownTimeoutMillis(), TimeUnit.MILLISECONDS))
-                    getLogger().error("ExecutorService pool did not terminate!");
-            }
-        } catch (InterruptedException ie) {
+            pool.awaitTermination(getShutdownTimeoutMillis(), TimeUnit.MILLISECONDS);
+            getLogger().info("Cancelled tasks: " + pool.shutdownNow().size()); // Cancel currently executing tasks
+        } catch (InterruptedException ex) {
             // (Re-)Cancel if current thread also interrupted
+            getLogger().debug("Interruption required!");
             pool.shutdownNow();
             // Preserve interrupt status
             Thread.currentThread().interrupt();

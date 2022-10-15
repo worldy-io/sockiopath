@@ -2,20 +2,14 @@ package io.worldy.sockiopath.websocket;
 
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelException;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import io.worldy.sockiopath.CountDownLatchChannelHandler;
 import io.worldy.sockiopath.SockiopathServer;
 import io.worldy.sockiopath.StartServerResult;
 import io.worldy.sockiopath.websocket.client.BootstrappedWebSocketClient;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
 
 import java.net.BindException;
 import java.util.HashMap;
@@ -23,9 +17,11 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static io.worldy.sockiopath.SockiopathServerTest.channelEchoWebSocketHandler;
+import static io.worldy.sockiopath.SockiopathServerTest.getWebSocketClient;
+import static io.worldy.sockiopath.SockiopathServerTest.getWebSocketServer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,7 +43,7 @@ public class WebSocketServerTest {
         StartServerResult startServerResult = webSocketServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get();
         int port = startServerResult.port();
 
-        BootstrappedWebSocketClient client = getClient(latch, responseMap, port, null);
+        BootstrappedWebSocketClient client = getWebSocketClient(latch, responseMap, port, null);
 
         client.startup();
         if (!client.getChannel().writeAndFlush(new TextWebSocketFrame("test")).await(1000, TimeUnit.MILLISECONDS)) {
@@ -70,35 +66,6 @@ public class WebSocketServerTest {
         }
     }
 
-    @Test
-    void shutDownServerWithoutGraceTest() throws InterruptedException, ExecutionException {
-
-        Logger logger = Mockito.mock(Logger.class);
-        ExecutorService executor = Executors.newFixedThreadPool(1);
-        SockiopathServer webSocketServer = new WebSocketServer(
-                SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler),
-                executor,
-                0
-        ) {
-            @Override
-            public Logger getLogger() {
-                return logger;
-            }
-
-            @Override
-            public long getShutdownTimeoutMillis() {
-                return -1;
-            }
-        };
-
-        webSocketServer.start().get().closeFuture().cancel(false);
-
-        if(!executor.awaitTermination(5000, TimeUnit.MILLISECONDS)) {
-            fail("Server took too long to shut down!");
-        }
-        Mockito.verify(logger, Mockito.times(1)).error("ExecutorService pool did not terminate!");
-    }
-
 
     @Test
     void startSslServerFailsWithMocksTest() throws InterruptedException, ExecutionException {
@@ -117,7 +84,7 @@ public class WebSocketServerTest {
 
         int port = webSocketServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get().port();
 
-        BootstrappedWebSocketClient client = getClient(latch, responseMap, port, Mockito.mock(SslContext.class));
+        BootstrappedWebSocketClient client = getWebSocketClient(latch, responseMap, port, Mockito.mock(SslContext.class));
 
         ChannelException channelException = assertThrows(ChannelException.class, client::startup);
 
@@ -135,7 +102,7 @@ public class WebSocketServerTest {
                 "localhost",
                 port,
                 "/websocket",
-                channelEchoHandler(),
+                channelEchoWebSocketHandler(),
                 null,
                 0,
                 500
@@ -156,7 +123,7 @@ public class WebSocketServerTest {
                 "localhost",
                 port,
                 "/websocket",
-                channelEchoHandler(),
+                channelEchoWebSocketHandler(),
                 null,
                 500,
                 0
@@ -176,45 +143,6 @@ public class WebSocketServerTest {
         });
 
         assertThat(exception.getCause(), instanceOf(BindException.class));
-    }
-
-    private static WebSocketServer getWebSocketServer(int port, SslContext serverSslContext) {
-        final ChannelInitializer<SocketChannel> basicWebSocketChannelHandler;
-        if (serverSslContext == null) {
-            basicWebSocketChannelHandler = SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler);
-        } else {
-            basicWebSocketChannelHandler = SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler, serverSslContext);
-        }
-        return new WebSocketServer(
-                basicWebSocketChannelHandler,
-                Executors.newFixedThreadPool(1),
-                port
-        );
-    }
-
-    private static BootstrappedWebSocketClient getClient(CountDownLatch latch, Map<Long, Object> responseMap, int port, SslContext clientSslContext) {
-        return new BootstrappedWebSocketClient(
-                "localhost",
-                port,
-                "/websocket",
-                new CountDownLatchChannelHandler(latch, responseMap, (message) -> {
-                }),
-                clientSslContext,
-                500,
-                500
-        );
-    }
-
-    public static SimpleChannelInboundHandler<Object> channelEchoHandler() {
-        return new SimpleChannelInboundHandler<>() {
-            @Override
-            protected void channelRead0(ChannelHandlerContext channelHandlerContext, Object message) {
-                if (message instanceof TextWebSocketFrame textFrame) {
-                    String textMessage = textFrame.text();
-                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(textMessage));
-                }
-            }
-        };
     }
 
 
