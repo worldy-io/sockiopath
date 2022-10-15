@@ -12,7 +12,6 @@ import io.worldy.sockiopath.messaging.MessageBus;
 import io.worldy.sockiopath.messaging.SockiopathMessage;
 import io.worldy.sockiopath.session.SessionStore;
 import io.worldy.sockiopath.session.SockiopathSession;
-import io.worldy.sockiopath.udp.UdpServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +81,7 @@ public abstract class SockiopathHandler<T> extends SimpleChannelInboundHandler<T
     protected void logError(InetSocketAddress sender, ByteBuffer content) {
         final String message;
         if (logger.isDebugEnabled()) {
-            message = UdpServer.byteBufferToString(content);
+            message = SockiopathServer.byteBufferToString(content);
         } else {
             message = ENABLE_DEBUGGING_MESSAGE;
         }

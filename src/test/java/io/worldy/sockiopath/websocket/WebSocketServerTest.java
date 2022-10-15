@@ -15,6 +15,7 @@ import io.worldy.sockiopath.StartServerResult;
 import io.worldy.sockiopath.websocket.client.BootstrappedWebSocketClient;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
 
 import java.net.BindException;
 import java.util.HashMap;
@@ -69,13 +70,41 @@ public class WebSocketServerTest {
         }
     }
 
+    @Test
+    void shutDownServerWithoutGraceTest() throws InterruptedException, ExecutionException {
+
+        Logger logger = Mockito.mock(Logger.class);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        SockiopathServer webSocketServer = new WebSocketServer(
+                SockiopathServer.basicWebSocketChannelHandler(WebSocketServerTest::channelEchoHandler),
+                executor,
+                0
+        ) {
+            @Override
+            public Logger getLogger() {
+                return logger;
+            }
+
+            @Override
+            public long getShutdownTimeoutMillis() {
+                return -1;
+            }
+        };
+
+        webSocketServer.start().get().closeFuture().cancel(false);
+
+        if(!executor.awaitTermination(5000, TimeUnit.MILLISECONDS)) {
+            fail("Server took too long to shut down!");
+        }
+        Mockito.verify(logger, Mockito.times(1)).error("ExecutorService pool did not terminate!");
+    }
+
 
     @Test
     void startSslServerFailsWithMocksTest() throws InterruptedException, ExecutionException {
 
         CountDownLatch latch = new CountDownLatch(1);
         Map<Long, Object> responseMap = new HashMap<>();
-        String expectedResponse = "test";
 
         SslContext serverSslContext = Mockito.mock(SslContext.class);
         SslHandler channelHandler = Mockito.mock(SslHandler.class);

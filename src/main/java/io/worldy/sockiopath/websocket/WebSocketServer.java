@@ -11,12 +11,16 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.worldy.sockiopath.SockiopathServer;
 import io.worldy.sockiopath.StartServerResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 public class WebSocketServer implements SockiopathServer {
+
+    private static Logger logger = LoggerFactory.getLogger(SockiopathServer.class);
 
     private final ChannelHandler channelHandler;
     private final ExecutorService executor;
@@ -65,4 +69,8 @@ public class WebSocketServer implements SockiopathServer {
         return actualPort;
     }
 
+    @Override
+    public Logger getLogger() {
+        return logger;
+    }
 }

@@ -12,6 +12,8 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.worldy.sockiopath.SockiopathServer;
 import io.worldy.sockiopath.StartServerResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 public class UdpServer implements SockiopathServer {
+
+    private static Logger logger = LoggerFactory.getLogger(SockiopathServer.class);
 
     private final ChannelHandler channelHandler;
     private final ExecutorService executor;
@@ -68,17 +72,8 @@ public class UdpServer implements SockiopathServer {
         return actualPort;
     }
 
-    public static String byteBufferToString(ByteBuffer content) {
-        var capacity = content.capacity();
-        content.position(0);
-
-        StringBuilder builder = new StringBuilder();
-
-        while (content.position() < capacity) {
-            byte singleByte = content.get();
-            char character = (char) singleByte;
-            builder.append(character);
-        }
-        return builder.toString();
+    @Override
+    public Logger getLogger() {
+        return logger;
     }
 }

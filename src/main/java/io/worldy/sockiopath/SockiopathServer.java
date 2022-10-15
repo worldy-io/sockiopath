@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.CompletableFuture;
@@ -81,19 +82,34 @@ public interface SockiopathServer {
         };
     }
 
+    static String byteBufferToString(ByteBuffer content) {
+        var capacity = content.capacity();
+        content.position(0);
+
+        StringBuilder builder = new StringBuilder();
+
+        while (content.position() < capacity) {
+            byte singleByte = content.get();
+            char character = (char) singleByte;
+            builder.append(character);
+        }
+
+        return builder.toString();
+    }
+
     default void shutdownAndAwaitTermination(ExecutorService pool, List<EventLoopGroup> groups) {
-        logger.info("shutting down server...");
+        getLogger().info("shutting down server...");
 
         ListIterator<EventLoopGroup> it = groups.listIterator();
         while (it.hasNext()) {
             int index = it.nextIndex();
             EventLoopGroup group = it.next();
-            logger.info("shutting down event loop group: " + index + "...");
+            getLogger().info("shutting down event loop group: " + index + "...");
             group.shutdownGracefully();
         }
-        logger.info("done shutting down event loop groups.");
+        getLogger().info("done shutting down event loop groups.");
 
-        logger.info("shutting down ExecutorService pool...");
+        getLogger().info("shutting down ExecutorService pool...");
         pool.shutdown(); // Disable new tasks from being submitted
         try {
             // Wait a while for existing tasks to terminate
@@ -101,7 +117,7 @@ public interface SockiopathServer {
                 pool.shutdownNow(); // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
                 if (!pool.awaitTermination(getShutdownTimeoutMillis(), TimeUnit.MILLISECONDS))
-                    logger.error("ExecutorService pool did not terminate: " + this.getClass().getTypeName());
+                    getLogger().error("ExecutorService pool did not terminate!");
             }
         } catch (InterruptedException ie) {
             // (Re-)Cancel if current thread also interrupted
@@ -109,10 +125,12 @@ public interface SockiopathServer {
             // Preserve interrupt status
             Thread.currentThread().interrupt();
         }
-        logger.info("done shutting down ExecutorService.");
+        getLogger().info("done shutting down ExecutorService.");
     }
 
     default long getShutdownTimeoutMillis() {
         return DEFAULT_SHUTDOWN_TIMEOUT_MILLIS;
     }
+
+    Logger getLogger();
 }
