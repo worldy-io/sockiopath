@@ -49,27 +49,18 @@ public class SockiopathCommandLine {
                 startWebSocketServer(options, webSocketServerExecutorService, sessionStore)
         );
 
-        AtomicInteger webSocketMessageIndexer = new AtomicInteger(-1);
-        Map<Integer, Object> responseMap = new HashMap<>();
-        Optional<Channel> maybeClientChannel = Optional.ofNullable(
-                startWebSocketClient(
-                        options,
-                        maybeWebSocketServer.map(server -> server.port()).orElse(options.webSocketPort()),
-                        webSocketMessageIndexer,
-                        responseMap
-                )
-        );
-
-//        var sessionId = maybeClientChannel.map(channel -> {
-//            channel.writeAndFlush("join");
-//
-//            System.out.println("sessionId: " + responseMap.get(0));
-//            return responseMap.get(0);
-//        });
-
+//        AtomicInteger webSocketMessageIndexer = new AtomicInteger(-1);
+//        Map<Integer, Object> responseMap = new HashMap<>();
+//        Optional<Channel> maybeClientChannel = Optional.ofNullable(
+//                startWebSocketClient(
+//                        options,
+//                        maybeWebSocketServer.map(server -> server.port()).orElse(options.webSocketPort()),
+//                        webSocketMessageIndexer,
+//                        responseMap
+//                )
+//        );
 
         boolean quit = false;
-        int lastMessageIndex = -1;
         while (!quit) {
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(System.in));
@@ -77,20 +68,17 @@ public class SockiopathCommandLine {
             String command = reader.readLine();
             System.out.println("command: " + command);
 
-            maybeClientChannel.ifPresent(channel -> {
-                channel.writeAndFlush(new TextWebSocketFrame(command));
-            });
-
-            if(responseMap.get(0) != null) {
-                System.out.println(((TextWebSocketFrame)responseMap.get(0)).text());
-            }
+//            maybeClientChannel.ifPresent(channel -> {
+//                channel.writeAndFlush(new TextWebSocketFrame(command));
+//            });
+//
+//            if(responseMap.get(0) != null) {
+//                System.out.println(((TextWebSocketFrame)responseMap.get(0)).text());
+//            }
 
             if (command.equals("quit")) {
                 System.out.println("stopping WebSocket server...");
                 maybeWebSocketServer.map(s -> s.closeFuture().cancel(true));
-                webSocketServerExecutorService.shutdown();
-                shutdownAndAwaitTermination(webSocketServerExecutorService);
-                System.out.println("WebSocket server stopped");
                 quit = true;
             }
         }
@@ -132,10 +120,10 @@ public class SockiopathCommandLine {
         pool.shutdown(); // Disable new tasks from being submitted
         try {
             // Wait a while for existing tasks to terminate
-            if (!pool.awaitTermination(5, TimeUnit.SECONDS)) {
+            if (!pool.awaitTermination(50, TimeUnit.SECONDS)) {
                 pool.shutdownNow(); // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
-                if (!pool.awaitTermination(5, TimeUnit.SECONDS))
+                if (!pool.awaitTermination(50, TimeUnit.SECONDS))
                     System.err.println("Pool did not terminate");
             }
         } catch (InterruptedException ie) {

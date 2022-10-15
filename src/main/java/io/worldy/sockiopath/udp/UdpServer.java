@@ -12,16 +12,13 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.worldy.sockiopath.SockiopathServer;
 import io.worldy.sockiopath.StartServerResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 public class UdpServer implements SockiopathServer {
-
-    private static final Logger logger = LoggerFactory.getLogger(UdpServer.class);
 
     private final ChannelHandler channelHandler;
     private final ExecutorService executor;
@@ -60,7 +57,7 @@ public class UdpServer implements SockiopathServer {
             } catch (Exception ex) {
                 future.completeExceptionally(ex);
             } finally {
-                group.shutdownGracefully();
+                shutdownAndAwaitTermination(executor, List.of(group));
             }
         });
         return future;
