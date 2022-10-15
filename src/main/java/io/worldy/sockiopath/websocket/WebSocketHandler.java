@@ -2,35 +2,64 @@ package io.worldy.sockiopath.websocket;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.worldy.sockiopath.session.MapBackedSessionStore;
+import io.worldy.sockiopath.SockiopathHandler;
+import io.worldy.sockiopath.messaging.MessageBus;
+import io.worldy.sockiopath.messaging.SockiopathMessage;
 import io.worldy.sockiopath.session.SessionStore;
 import io.worldy.sockiopath.session.SockiopathSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
-public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
+public class WebSocketHandler extends SockiopathHandler<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(WebSocketHandler.class);
     private static final String TEXT_COMMAND_JOIN = "join";
 
     private static final String DELIMINATOR = "|";
     private static final String TEXT_RESPONSE_PART_SESSION = "session" + DELIMINATOR;
-    final SessionStore<SockiopathSession> sessionStore;
 
-    public WebSocketHandler(SessionStore<SockiopathSession> sessionStore) {
-        this.sessionStore = sessionStore;
+    private static final InetSocketAddress VIRTUAL_INET_SOCKET_ADDRESS = new InetSocketAddress("VIRTUAL_INET_SOCKET_ADDRESS", 42);
+
+
+    public WebSocketHandler(
+            SessionStore<SockiopathSession> sessionStore,
+            Map<String, MessageBus> messageHandlers,
+            Function<ByteBuffer, Optional<SockiopathMessage>> messageParser,
+            Logger logger
+    ) {
+        super(sessionStore, messageHandlers, messageParser, logger);
     }
 
-    public WebSocketHandler(Map<String, SockiopathSession> sessionMap) {
-        this(new MapBackedSessionStore(sessionMap));
+    public WebSocketHandler(
+            SessionStore<SockiopathSession> sessionStore,
+            Map<String, MessageBus> messageHandlers,
+            char deliminator
+    ) {
+        super(sessionStore, messageHandlers, deliminator);
+    }
+
+    public WebSocketHandler(
+            SessionStore<SockiopathSession> sessionStore,
+            Map<String, MessageBus> messageHandlers
+    ) {
+        super(sessionStore, messageHandlers);
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Object frame) {
+    protected boolean isUdp() {
+        return false;
+    }
+
+    @Override
+    public void channelRead0(ChannelHandlerContext ctx, Object frame) {
 
         if (frame instanceof TextWebSocketFrame textFrame) {
             String textMessage = textFrame.text();
@@ -51,6 +80,8 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
                     sessionStore.get().apply(key).getWebSocketContext().writeAndFlush(new TextWebSocketFrame(prefix + textMessage));
                 });
             }
+        } else if (frame instanceof BinaryWebSocketFrame binaryFrame) {
+            super.channelRead0(ctx, VIRTUAL_INET_SOCKET_ADDRESS, binaryFrame.content());
         } else {
             String message = "unsupported frame type: " + frame.getClass().getName();
             throw new UnsupportedOperationException(message);

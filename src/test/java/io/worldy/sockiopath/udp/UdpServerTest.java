@@ -6,6 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import io.worldy.sockiopath.CountDownLatchChannelHandler;
+import io.worldy.sockiopath.StartServerResult;
 import io.worldy.sockiopath.udp.client.BootstrappedUdpClient;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,6 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -25,6 +25,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class UdpServerTest {
 
@@ -36,11 +37,19 @@ public class UdpServerTest {
                 0
         );
 
-        int port = udpServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get().port();
+        StartServerResult startServerResult = udpServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get();
+        int port = startServerResult.port();
         String expectedResponse = "hello";
         String response = request("hello", expectedResponse.getBytes().length, port);
         assertEquals(expectedResponse, response);
         assertEquals(port, udpServer.actualPort());
+
+        if (!startServerResult.closeFuture().cancel(true)) {
+            fail("unable to stop server.");
+        }
+        if (!startServerResult.closeFuture().await(1000, TimeUnit.MILLISECONDS)) {
+            fail("server took too long to shut down.");
+        }
     }
 
     @Test
@@ -110,8 +119,6 @@ public class UdpServerTest {
             socket.receive(packet);
 
             return new String(packet.getData());
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
