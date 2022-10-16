@@ -3,11 +3,11 @@
 name: Quarkus Codestart CI
 
 on:
-  push:
+  pull_request:
     branches: [ main ]
 
 jobs:
-  deploy:
+  coverage:
     runs-on: ubuntu-latest
     environment: deploying
     steps:
@@ -20,12 +20,6 @@ jobs:
           cache: 'maven'
       - name: Verify
         run: ./mvnw -B verify --file pom.xml
-      - name: Deploy
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "<settings><servers><server><id>github</id><username>OWNER</username><password>${GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
-          ./mvnw -B deploy
   report:
     runs-on: ubuntu-latest
     environment: deploying

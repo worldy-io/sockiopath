@@ -36,10 +36,6 @@ public interface SockiopathServer {
     String DEFAULT_WEB_SOCKET_PATH = "/websocket";
 
     CompletableFuture<StartServerResult> start();
-    default void stop() {
-        getCloseFuture().cancel(false);
-        shutdownAndAwaitTermination();
-    }
 
     int actualPort();
 
@@ -49,7 +45,66 @@ public interface SockiopathServer {
 
     default Logger getLogger() {
         return logger;
-    };
+    }
+
+    default void stop() {
+        getCloseFuture().cancel(false);
+        shutdownAndAwaitTermination();
+    }
+
+    default void shutdownEventLoops(List<EventLoopGroup> groups) {
+        getLogger().info("shutting down server...");
+
+        ListIterator<EventLoopGroup> it = groups.listIterator();
+        while (it.hasNext()) {
+            int index = it.nextIndex();
+            EventLoopGroup group = it.next();
+            getLogger().info("shutting down event loop group: " + index + "...");
+            group.shutdownGracefully();
+        }
+        getLogger().info("done shutting down event loop groups.");
+    }
+
+    default List<Runnable> shutdownAndAwaitTermination() {
+        ExecutorService pool = getExecutorService();
+        List<Runnable> cancelledTasks = new ArrayList<>();
+        getLogger().info("shutting down server...");
+
+        getLogger().info("shutting down ExecutorService pool...");
+        pool.shutdown(); // Disable new tasks from being submitted
+        try {
+            boolean existingAndCurrentTasksComplete = pool.awaitTermination(shutdownTimeoutMillis(), TimeUnit.MILLISECONDS);
+            if (!existingAndCurrentTasksComplete) {
+                cancelledTasks.addAll(pool.shutdownNow()); // Cancel currently executing tasks
+                // Wait a while for tasks to respond to being cancelled
+                boolean currentTasksComplete = pool.awaitTermination(shutdownNowTimeoutMillis(), TimeUnit.MILLISECONDS);
+                if (!currentTasksComplete) {
+                    getLogger().error("Pool did not terminate.");
+                } else {
+                    getLogger().warn("Hasty shutdown.");
+                }
+            } else {
+                getLogger().info("Graceful shutdown.");
+            }
+        } catch (InterruptedException ex) {
+            getLogger().error("Interruption required during shutdown!");
+            // (Re-)Cancel if current thread also interrupted
+
+            cancelledTasks.addAll(pool.shutdownNow());
+            // Preserve interrupt status
+            Thread.currentThread().interrupt();
+        }
+        getLogger().info("done shutting down ExecutorService.");
+        return cancelledTasks;
+    }
+
+    default long shutdownTimeoutMillis() {
+        return DEFAULT_SHUTDOWN_TIMEOUT_MILLIS;
+    }
+
+    default long shutdownNowTimeoutMillis() {
+        return DEFAULT_SHUTDOWN_NOW_TIMEOUT_MILLIS;
+    }
 
     static int getPort(Channel channel) {
         SocketAddress socketAddress = channel.localAddress();
@@ -110,59 +165,5 @@ public interface SockiopathServer {
         }
 
         return builder.toString();
-    }
-
-    default void shutdownEventLoops(List<EventLoopGroup> groups) {
-        getLogger().info("shutting down server...");
-
-        ListIterator<EventLoopGroup> it = groups.listIterator();
-        while (it.hasNext()) {
-            int index = it.nextIndex();
-            EventLoopGroup group = it.next();
-            getLogger().info("shutting down event loop group: " + index + "...");
-            group.shutdownGracefully();
-        }
-        getLogger().info("done shutting down event loop groups.");
-    }
-
-    default List<Runnable> shutdownAndAwaitTermination() {
-        ExecutorService pool = getExecutorService();
-        List<Runnable> cancelledTasks = new ArrayList<>();
-        getLogger().info("shutting down server...");
-
-        getLogger().info("shutting down ExecutorService pool...");
-        pool.shutdown(); // Disable new tasks from being submitted
-        try {
-            boolean existingAndCurrentTasksComplete = pool.awaitTermination(shutdownTimeoutMillis(), TimeUnit.MILLISECONDS);
-            if (!existingAndCurrentTasksComplete) {
-                cancelledTasks.addAll(pool.shutdownNow()); // Cancel currently executing tasks
-                // Wait a while for tasks to respond to being cancelled
-                boolean currentTasksComplete = pool.awaitTermination(shutdownNowTimeoutMillis(), TimeUnit.MILLISECONDS);
-                if (!currentTasksComplete) {
-                    getLogger().error("Pool did not terminate.");
-                } else {
-                    getLogger().warn("Hasty shutdown.");
-                }
-            } else {
-                getLogger().info("Graceful shutdown.");
-            }
-        } catch (InterruptedException ex) {
-            getLogger().error("Interruption required during shutdown!");
-            // (Re-)Cancel if current thread also interrupted
-
-            cancelledTasks.addAll(pool.shutdownNow());
-            // Preserve interrupt status
-            Thread.currentThread().interrupt();
-        }
-        getLogger().info("done shutting down ExecutorService.");
-        return cancelledTasks;
-    }
-
-    default long shutdownTimeoutMillis() {
-        return DEFAULT_SHUTDOWN_TIMEOUT_MILLIS;
-    }
-
-    default long shutdownNowTimeoutMillis() {
-        return DEFAULT_SHUTDOWN_NOW_TIMEOUT_MILLIS;
     }
 }
