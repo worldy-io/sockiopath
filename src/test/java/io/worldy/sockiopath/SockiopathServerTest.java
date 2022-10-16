@@ -62,11 +62,11 @@ public class SockiopathServerTest {
     @Test
     void gracefulDefaultShutDownTest() throws InterruptedException, ExecutionException {
 
-        ExecutorService executor = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
         SockiopathServer webSocketServer =
                 new AbstractSockiopathServer(
                         SockiopathServer.basicWebSocketChannelHandler(SockiopathServerTest::channelEchoWebSocketHandler),
-                        executor,
+                        executorService,
                         0
                 ) {
                     @Override
@@ -99,8 +99,8 @@ public class SockiopathServerTest {
                 };
 
         webSocketServer.start().get().server().stop();
-        awaitTermination(executor);
-        assertTerminationAndShutdown(executor);
+        awaitTermination(executorService);
+        assertTerminationAndShutdown(executorService);
     }
 
     @Test

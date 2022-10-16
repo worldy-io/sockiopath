@@ -17,61 +17,6 @@ record Options(
         String udpHost,
         int udpPort
 ) {
-    static Options parse(String[] args) {
-        org.apache.commons.cli.Options options = new org.apache.commons.cli.Options();
-        options.addOption("help", "help", false, "print this message");
-        options.addOption(OPTION_WEB_SOCKET_PORT);
-        options.addOption(OPTION_WEB_SOCKET_PORT);
-
-        CommandLineParser parser = new DefaultParser();
-        HelpFormatter formatter = new HelpFormatter();
-
-        try {
-            CommandLine cmd = parser.parse(options, args);
-            if (cmd.hasOption("help")) {
-                formatter.printHelp(HELP_MESSAGE, options);
-                System.exit(0);
-            }
-
-            boolean serverMode = Optional.ofNullable(
-                    cmd.getOptionValue(OPTION_SERVER_MODE.getLongOpt())
-            ).map(Boolean::parseBoolean).orElse(true);
-
-            boolean clientMode = Optional.ofNullable(
-                    cmd.getOptionValue(OPTION_SERVER_MODE.getLongOpt())
-            ).map(Boolean::parseBoolean).orElse(true);
-
-            String host = Optional.ofNullable(
-                    cmd.getOptionValue(OPTION_HOST.getLongOpt())
-            ).orElse(DEFAULT_HOST);
-
-            String webSocketHost = Optional.ofNullable(
-                    cmd.getOptionValue(OPTION_WEB_SOCKET_HOST.getLongOpt())
-            ).orElse(host);
-
-            String udpHost = Optional.ofNullable(
-                    cmd.getOptionValue(OPTION_UPD_HOST.getLongOpt())
-            ).orElse(host);
-
-            int webSocketPort = Optional.ofNullable(
-                            cmd.getOptionValue(OPTION_WEB_SOCKET_PORT.getLongOpt()))
-                    .map(Integer::parseInt)
-                    .orElse(DEFAULT_WEB_SOCKET_PORT);
-
-            int udpPort = Optional.ofNullable(
-                            cmd.getOptionValue(OPTION_UDP_PORT.getLongOpt()))
-                    .map(Integer::parseInt)
-                    .orElse(DEFAULT_UDP_PORT);
-
-            return new Options(serverMode, clientMode, webSocketHost, webSocketPort, udpHost, udpPort);
-
-        } catch (ParseException e) {
-            System.out.println(e.getMessage());
-            formatter.printHelp(HELP_MESSAGE, options);
-            System.exit(1);
-        }
-        return null;
-    }
 
     private static String DEFAULT_HOST = "localhost";
 
@@ -112,20 +57,90 @@ record Options(
             "h",
             "host",
             true,
-            "The host to use for WebSockets and UDP.  Default: " + DEFAULT_HOST
+            "The host to use for WebSockets and UDP client connections.  Default: " + DEFAULT_HOST
     );
 
     private static final Option OPTION_UPD_HOST = new Option(
             "udpHost",
             "udpHost",
             true,
-            "The host to use for UDP.  Default: " + DEFAULT_HOST
+            "The host to use for UDP client connections.  Default: " + DEFAULT_HOST
     );
 
     private static final Option OPTION_WEB_SOCKET_HOST = new Option(
             "wsHost",
             "webSocketHost",
             true,
-            "The host to use for WebSockets.  Default: " + DEFAULT_HOST
+            "The host to use for WebSockets client connections.  Default: " + DEFAULT_HOST
     );
+
+    static org.apache.commons.cli.Options DEFAULT_OPTIONS = new org.apache.commons.cli.Options();
+
+    static {
+        DEFAULT_OPTIONS.addOption("help", "help", false, "print this message");
+        DEFAULT_OPTIONS.addOption(OPTION_SERVER_MODE);
+        DEFAULT_OPTIONS.addOption(OPTION_CLIENT_MODE);
+        DEFAULT_OPTIONS.addOption(OPTION_UDP_PORT);
+        DEFAULT_OPTIONS.addOption(OPTION_WEB_SOCKET_PORT);
+
+        //hosts for client connection
+        DEFAULT_OPTIONS.addOption(OPTION_HOST);
+        DEFAULT_OPTIONS.addOption(OPTION_UPD_HOST);
+        DEFAULT_OPTIONS.addOption(OPTION_WEB_SOCKET_HOST);
+    }
+
+    static Options parse(String[] args, HelpFormatter formatter) {
+        return parse(args, formatter, DEFAULT_OPTIONS);
+    }
+
+    static Options parse(String[] args, HelpFormatter formatter, org.apache.commons.cli.Options options) {
+
+        CommandLineParser parser = new DefaultParser();
+
+        try {
+            CommandLine cmd = parser.parse(options, args);
+            if (cmd.hasOption("help")) {
+                formatter.printHelp(HELP_MESSAGE, options);
+                return null;
+            }
+
+            boolean serverMode = Optional.ofNullable(
+                    cmd.getOptionValue(OPTION_SERVER_MODE.getLongOpt())
+            ).map(Boolean::parseBoolean).orElse(true);
+
+
+            boolean clientMode = Optional.ofNullable(
+                    cmd.getOptionValue(OPTION_SERVER_MODE.getLongOpt())
+            ).map(Boolean::parseBoolean).orElse(true);
+
+            String host = Optional.ofNullable(
+                    cmd.getOptionValue(OPTION_HOST.getLongOpt())
+            ).orElse(DEFAULT_HOST);
+
+            String webSocketHost = Optional.ofNullable(
+                    cmd.getOptionValue(OPTION_WEB_SOCKET_HOST.getLongOpt())
+            ).orElse(host);
+
+            String udpHost = Optional.ofNullable(
+                    cmd.getOptionValue(OPTION_UPD_HOST.getLongOpt())
+            ).orElse(host);
+
+            int webSocketPort = Optional.ofNullable(
+                            cmd.getOptionValue(OPTION_WEB_SOCKET_PORT.getLongOpt()))
+                    .map(Integer::parseInt)
+                    .orElse(DEFAULT_WEB_SOCKET_PORT);
+
+            int udpPort = Optional.ofNullable(
+                            cmd.getOptionValue(OPTION_UDP_PORT.getLongOpt()))
+                    .map(Integer::parseInt)
+                    .orElse(DEFAULT_UDP_PORT);
+
+            return new Options(serverMode, clientMode, webSocketHost, webSocketPort, udpHost, udpPort);
+
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp(HELP_MESSAGE, options);
+        }
+        return null;
+    }
 }
