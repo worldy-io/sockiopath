@@ -2,5 +2,5 @@ package io.worldy.sockiopath;
 
 import io.netty.channel.ChannelFuture;
 
-public record StartServerResult(Integer port, ChannelFuture closeFuture) {
+public record StartServerResult(Integer port, ChannelFuture closeFuture, SockiopathServer server) {
 }

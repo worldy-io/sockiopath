@@ -4,7 +4,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.worldy.sockiopath.udp.UdpServer;
 
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -30,7 +29,7 @@ public class CountDownLatchChannelHandler extends SimpleChannelInboundHandler<Ob
             responseMap.put(latch.getCount(), frame.copy());
             latch.countDown();
         } else if (msg instanceof DatagramPacket datagramPacket) {
-            debug.accept(UdpServer.byteBufferToString(datagramPacket.copy().content().nioBuffer()));
+            debug.accept(SockiopathServer.byteBufferToString(datagramPacket.copy().content().nioBuffer()));
             responseMap.put(latch.getCount(), datagramPacket.copy());
             latch.countDown();
         }

@@ -6,6 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import io.worldy.sockiopath.CountDownLatchChannelHandler;
+import io.worldy.sockiopath.SockiopathServer;
 import io.worldy.sockiopath.StartServerResult;
 import io.worldy.sockiopath.udp.client.BootstrappedUdpClient;
 import org.junit.jupiter.api.Test;
@@ -86,7 +87,7 @@ public class UdpServerTest {
         }
 
         DatagramPacket datagramPacket = (DatagramPacket) responseMap.get(1l);
-        assertEquals(expectedResponse, UdpServer.byteBufferToString(datagramPacket.content().nioBuffer()));
+        assertEquals(expectedResponse, SockiopathServer.byteBufferToString(datagramPacket.content().nioBuffer()));
     }
 
     @Test
