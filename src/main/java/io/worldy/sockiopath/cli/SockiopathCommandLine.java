@@ -5,9 +5,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.worldy.sockiopath.SockiopathServer;
-import io.worldy.sockiopath.StartServerResult;
 import io.worldy.sockiopath.messaging.MessageBus;
 import io.worldy.sockiopath.session.MapBackedSessionStore;
 import io.worldy.sockiopath.session.SessionStore;
@@ -45,20 +43,9 @@ public class SockiopathCommandLine {
 
         ExecutorService webSocketServerExecutorService = Executors.newFixedThreadPool(1);
 
-        Optional<StartServerResult> maybeWebSocketServer = Optional.ofNullable(
+        Optional<SockiopathServer> maybeWebSocketServer = Optional.ofNullable(
                 startWebSocketServer(options, webSocketServerExecutorService, sessionStore)
         );
-
-//        AtomicInteger webSocketMessageIndexer = new AtomicInteger(-1);
-//        Map<Integer, Object> responseMap = new HashMap<>();
-//        Optional<Channel> maybeClientChannel = Optional.ofNullable(
-//                startWebSocketClient(
-//                        options,
-//                        maybeWebSocketServer.map(server -> server.port()).orElse(options.webSocketPort()),
-//                        webSocketMessageIndexer,
-//                        responseMap
-//                )
-//        );
 
         boolean quit = false;
         while (!quit) {
@@ -78,7 +65,7 @@ public class SockiopathCommandLine {
 
             if (command.equals("quit")) {
                 System.out.println("stopping WebSocket server...");
-                maybeWebSocketServer.map(s -> s.closeFuture().cancel(true));
+                maybeWebSocketServer.ifPresent(SockiopathServer::stop);
                 quit = true;
             }
         }
@@ -104,42 +91,24 @@ public class SockiopathCommandLine {
         return channel;
     }
 
-    static StartServerResult startWebSocketServer(Options options, ExecutorService webSocketServerExecutorService, SessionStore<SockiopathSession> sessionStore) throws ExecutionException, InterruptedException {
-        final StartServerResult startWebSocketServerResult;
+    static SockiopathServer startWebSocketServer(Options options, ExecutorService webSocketServerExecutorService, SessionStore<SockiopathSession> sessionStore) throws ExecutionException, InterruptedException {
+        final SockiopathServer sockiopathServer;
         if (options.server()) {
-            SockiopathServer sever = webSocketServer(options, webSocketServerExecutorService, sessionStore, DELIMINATOR);
-            startWebSocketServerResult = sever.start().orTimeout(1000, TimeUnit.MILLISECONDS).get();
-            System.out.println("Started WebSocket server on port: " + startWebSocketServerResult.port());
+            sockiopathServer = webSocketServer(options, webSocketServerExecutorService, sessionStore);
+            var port = sockiopathServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get().port();
+            System.out.println("Started WebSocket server on port: " + port);
         } else {
-            startWebSocketServerResult = null;
+            sockiopathServer = null;
         }
-        return startWebSocketServerResult;
+        return sockiopathServer;
     }
 
-    static void shutdownAndAwaitTermination(ExecutorService pool) {
-        pool.shutdown(); // Disable new tasks from being submitted
-        try {
-            // Wait a while for existing tasks to terminate
-            if (!pool.awaitTermination(50, TimeUnit.SECONDS)) {
-                pool.shutdownNow(); // Cancel currently executing tasks
-                // Wait a while for tasks to respond to being cancelled
-                if (!pool.awaitTermination(50, TimeUnit.SECONDS))
-                    System.err.println("Pool did not terminate");
-            }
-        } catch (InterruptedException ie) {
-            // (Re-)Cancel if current thread also interrupted
-            pool.shutdownNow();
-            // Preserve interrupt status
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    static SockiopathServer webSocketServer(Options options, ExecutorService executor, SessionStore<SockiopathSession> sessionStore, char deliminator) {
+    static SockiopathServer webSocketServer(Options options, ExecutorService executor, SessionStore<SockiopathSession> sessionStore) {
 
 
         List<Supplier<SimpleChannelInboundHandler<?>>> messageHandlerSupplier = List.of(
                 () -> new WebSocketIndexPageHandler(SockiopathServer.DEFAULT_WEB_SOCKET_PATH, "ui/websockets.html"),
-                () -> new WebSocketHandler(sessionStore, getMessageHandlers(), deliminator)
+                () -> new WebSocketHandler(sessionStore, getMessageHandlers(), DELIMINATOR)
         );
 
         ChannelInitializer<SocketChannel> newHandler = SockiopathServer.basicWebSocketChannelHandler(

@@ -23,24 +23,27 @@ public class WebSocketServer implements SockiopathServer {
     private static Logger logger = LoggerFactory.getLogger(SockiopathServer.class);
 
     private final ChannelHandler channelHandler;
-    private final ExecutorService executor;
+
+    private final ExecutorService executorService;
+
+    private ChannelFuture closeFuture;
     final int port;
     private int actualPort;
 
     public WebSocketServer(
             ChannelHandler channelHandler,
-            ExecutorService executor,
+            ExecutorService executorService,
             int port
     ) {
         this.channelHandler = channelHandler;
-        this.executor = executor;
+        this.executorService = executorService;
         this.port = port;
     }
 
     @Override
     public CompletableFuture<StartServerResult> start() {
         CompletableFuture<StartServerResult> future = new CompletableFuture<>();
-        executor.submit(() -> {
+        executorService.submit(() -> {
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             try {
@@ -51,9 +54,9 @@ public class WebSocketServer implements SockiopathServer {
                         .childHandler(channelHandler);
 
                 Channel channel = b.bind(port).sync().channel();
-                ChannelFuture closeFuture = channel.closeFuture();
+                this.closeFuture = channel.closeFuture();
                 actualPort = SockiopathServer.getPort(channel);
-                future.complete(new StartServerResult(actualPort, closeFuture));
+                future.complete(new StartServerResult(actualPort, closeFuture, this));
                 closeFuture.await();
             } catch (Exception e) {
                 future.completeExceptionally(e);
@@ -67,6 +70,16 @@ public class WebSocketServer implements SockiopathServer {
     @Override
     public int actualPort() {
         return actualPort;
+    }
+
+    @Override
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
+
+    @Override
+    public ChannelFuture getCloseFuture() {
+        return closeFuture;
     }
 
     @Override

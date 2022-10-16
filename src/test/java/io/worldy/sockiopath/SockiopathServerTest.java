@@ -45,7 +45,7 @@ public class SockiopathServerTest {
                     }
                 };
 
-        startAndStopServer(executor, webSocketServer);
+        startAndStopServer(webSocketServer);
         awaitTermination(executor);
 
         Mockito.verify(loggerMock, Mockito.atLeastOnce()).info("Graceful shutdown.");
@@ -73,7 +73,7 @@ public class SockiopathServerTest {
                     }
                 };
 
-        startAndStopServer(executor, webSocketServer);
+        startAndStopServer(webSocketServer);
         awaitTermination(executor);
 
         Mockito.verify(loggerMock, Mockito.atLeastOnce()).warn("Hasty shutdown.");
@@ -87,7 +87,7 @@ public class SockiopathServerTest {
         SockiopathServer webSocketServer =
                 getWebSocketServerWithShutdownTimeouts(executor, loggerMock, 1, 50);
 
-        startAndStopServer(executor, webSocketServer);
+        startAndStopServer(webSocketServer);
         awaitTermination(executor);
 
         Mockito.verify(loggerMock, Mockito.atLeastOnce()).warn("Hasty shutdown.");
@@ -103,7 +103,7 @@ public class SockiopathServerTest {
         SockiopathServer webSocketServer =
                 getWebSocketServerWithShutdownTimeouts(executor, loggerMock, 0, 0);
 
-        startAndStopServer(executor, webSocketServer);
+        startAndStopServer(webSocketServer);
         awaitTermination(executor);
 
         Mockito.verify(loggerMock, Mockito.atLeastOnce()).error("Pool did not terminate.");
@@ -111,9 +111,9 @@ public class SockiopathServerTest {
         assertTrue(executor.isShutdown());
     }
 
-    private static void startAndStopServer(ExecutorService executor, SockiopathServer webSocketServer) throws InterruptedException, ExecutionException {
+    private static void startAndStopServer(SockiopathServer webSocketServer) throws InterruptedException, ExecutionException {
         webSocketServer.start().get().closeFuture().cancel(false);
-        webSocketServer.shutdownAndAwaitTermination(executor);
+        webSocketServer.shutdownAndAwaitTermination();
     }
 
     @Test
@@ -179,7 +179,7 @@ public class SockiopathServerTest {
             public void shutdownEventLoops(List<EventLoopGroup> groups) {
                 super.shutdownEventLoops(groups);
                 if (forceInterrupt) {
-                    cancelledTasks.addAll(super.shutdownAndAwaitTermination(executor));
+                    cancelledTasks.addAll(super.shutdownAndAwaitTermination());
                 }
             }
         };

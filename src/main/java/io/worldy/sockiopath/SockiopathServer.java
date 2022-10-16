@@ -1,6 +1,7 @@
 package io.worldy.sockiopath;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -35,8 +36,20 @@ public interface SockiopathServer {
     String DEFAULT_WEB_SOCKET_PATH = "/websocket";
 
     CompletableFuture<StartServerResult> start();
+    default void stop() {
+        getCloseFuture().cancel(false);
+        shutdownAndAwaitTermination();
+    }
 
     int actualPort();
+
+    ExecutorService getExecutorService();
+
+    ChannelFuture getCloseFuture();
+
+    default Logger getLogger() {
+        return logger;
+    };
 
     static int getPort(Channel channel) {
         SocketAddress socketAddress = channel.localAddress();
@@ -112,7 +125,8 @@ public interface SockiopathServer {
         getLogger().info("done shutting down event loop groups.");
     }
 
-    default List<Runnable> shutdownAndAwaitTermination(ExecutorService pool) {
+    default List<Runnable> shutdownAndAwaitTermination() {
+        ExecutorService pool = getExecutorService();
         List<Runnable> cancelledTasks = new ArrayList<>();
         getLogger().info("shutting down server...");
 
@@ -151,6 +165,4 @@ public interface SockiopathServer {
     default long shutdownNowTimeoutMillis() {
         return DEFAULT_SHUTDOWN_NOW_TIMEOUT_MILLIS;
     }
-
-    Logger getLogger();
 }

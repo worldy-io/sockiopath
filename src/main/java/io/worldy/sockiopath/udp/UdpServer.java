@@ -8,8 +8,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import io.worldy.sockiopath.SockiopathServer;
 import io.worldy.sockiopath.StartServerResult;
 import org.slf4j.Logger;
@@ -24,26 +22,26 @@ public class UdpServer implements SockiopathServer {
     private static Logger logger = LoggerFactory.getLogger(SockiopathServer.class);
 
     private final ChannelHandler channelHandler;
-    private final ExecutorService executor;
+    private final ExecutorService executorService;
     private final int port;
 
-    private GenericFutureListener<Future<? super Void>> onClose;
+    private ChannelFuture closeFuture;
     private int actualPort;
 
     public UdpServer(
             ChannelHandler channelHandler,
-            ExecutorService executor,
+            ExecutorService executorService,
             int port
     ) {
         this.channelHandler = channelHandler;
-        this.executor = executor;
+        this.executorService = executorService;
         this.port = port;
     }
 
     @Override
     public CompletableFuture<StartServerResult> start() {
         CompletableFuture<StartServerResult> future = new CompletableFuture<>();
-        executor.submit(() -> {
+        executorService.submit(() -> {
             EventLoopGroup group = new NioEventLoopGroup();
             try {
                 Bootstrap bootstrap = new Bootstrap();
@@ -53,9 +51,9 @@ public class UdpServer implements SockiopathServer {
                         .handler(channelHandler);
 
                 Channel channel = bootstrap.bind(port).sync().channel();
-                ChannelFuture closeFuture = channel.closeFuture();
+                closeFuture = channel.closeFuture();
                 actualPort = SockiopathServer.getPort(channel);
-                future.complete(new StartServerResult(actualPort, closeFuture));
+                future.complete(new StartServerResult(actualPort, closeFuture, this));
                 closeFuture.await();
             } catch (Exception ex) {
                 future.completeExceptionally(ex);
@@ -69,6 +67,16 @@ public class UdpServer implements SockiopathServer {
     @Override
     public int actualPort() {
         return actualPort;
+    }
+
+    @Override
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
+
+    @Override
+    public ChannelFuture getCloseFuture() {
+        return closeFuture;
     }
 
     @Override
