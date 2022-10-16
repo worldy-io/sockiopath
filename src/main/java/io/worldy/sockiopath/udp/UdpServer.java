@@ -60,7 +60,7 @@ public class UdpServer implements SockiopathServer {
             } catch (Exception ex) {
                 future.completeExceptionally(ex);
             } finally {
-                shutdownAndAwaitTermination(executor, List.of(group));
+                shutdownEventLoops(List.of(group));
             }
         });
         return future;

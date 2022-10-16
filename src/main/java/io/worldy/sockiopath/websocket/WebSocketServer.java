@@ -58,7 +58,7 @@ public class WebSocketServer implements SockiopathServer {
             } catch (Exception e) {
                 future.completeExceptionally(e);
             } finally {
-                shutdownAndAwaitTermination(executor, List.of(bossGroup, workerGroup));
+                shutdownEventLoops(List.of(bossGroup, workerGroup));
             }
         });
         return future;
