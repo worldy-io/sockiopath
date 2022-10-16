@@ -1,11 +1,17 @@
 package io.worldy.sockiopath;
 
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.worldy.sockiopath.websocket.WebSocketServer;
 import io.worldy.sockiopath.websocket.client.BootstrappedWebSocketClient;
@@ -17,6 +23,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -45,10 +52,55 @@ public class SockiopathServerTest {
                     }
                 };
 
-        startAndStopServer(webSocketServer);
+        startThenManuallyStopServer(webSocketServer);
         awaitTermination(executor);
 
         Mockito.verify(loggerMock, Mockito.atLeastOnce()).info("Graceful shutdown.");
+        assertTerminationAndShutdown(executor);
+    }
+
+    @Test
+    void gracefulDefaultShutDownTest() throws InterruptedException, ExecutionException {
+
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        SockiopathServer webSocketServer =
+                new AbstractSockiopathServer(
+                        SockiopathServer.basicWebSocketChannelHandler(SockiopathServerTest::channelEchoWebSocketHandler),
+                        executor,
+                        0
+                ) {
+                    @Override
+                    public CompletableFuture<StartServerResult> start() {
+                        CompletableFuture<StartServerResult> future = new CompletableFuture<>();
+                        executorService.submit(() -> {
+                            EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+                            EventLoopGroup workerGroup = new NioEventLoopGroup();
+                            try {
+                                ServerBootstrap b = new ServerBootstrap();
+                                b.group(bossGroup, workerGroup)
+                                        .channel(NioServerSocketChannel.class)
+                                        .handler(new LoggingHandler(LogLevel.INFO))
+                                        .childHandler(channelHandler);
+
+                                Channel channel = b.bind(port).sync().channel();
+                                this.closeFuture = channel.closeFuture();
+                                actualPort = SockiopathServer.getPort(channel);
+                                future.complete(new StartServerResult(actualPort, closeFuture, this));
+                                closeFuture.await();
+                            } catch (Exception e) {
+                                future.completeExceptionally(e);
+                            } finally {
+                                shutdownEventLoops(List.of(bossGroup, workerGroup));
+                            }
+                        });
+                        return future;
+                    }
+
+                };
+
+        webSocketServer.start().get().server().stop();
+        awaitTermination(executor);
+        assertTerminationAndShutdown(executor);
     }
 
     @Test
@@ -73,10 +125,11 @@ public class SockiopathServerTest {
                     }
                 };
 
-        startAndStopServer(webSocketServer);
+        startThenManuallyStopServer(webSocketServer);
         awaitTermination(executor);
 
         Mockito.verify(loggerMock, Mockito.atLeastOnce()).warn("Hasty shutdown.");
+        assertTerminationAndShutdown(executor);
     }
 
     @Test
@@ -87,12 +140,11 @@ public class SockiopathServerTest {
         SockiopathServer webSocketServer =
                 getWebSocketServerWithShutdownTimeouts(executor, loggerMock, 1, 50);
 
-        startAndStopServer(webSocketServer);
+        startThenManuallyStopServer(webSocketServer);
         awaitTermination(executor);
 
         Mockito.verify(loggerMock, Mockito.atLeastOnce()).warn("Hasty shutdown.");
-        assertTrue(executor.isTerminated());
-        assertTrue(executor.isShutdown());
+        assertTerminationAndShutdown(executor);
     }
 
     @Test
@@ -103,15 +155,19 @@ public class SockiopathServerTest {
         SockiopathServer webSocketServer =
                 getWebSocketServerWithShutdownTimeouts(executor, loggerMock, 0, 0);
 
-        startAndStopServer(webSocketServer);
+        startThenManuallyStopServer(webSocketServer);
         awaitTermination(executor);
 
         Mockito.verify(loggerMock, Mockito.atLeastOnce()).error("Pool did not terminate.");
+        assertTerminationAndShutdown(executor);
+    }
+
+    private static void assertTerminationAndShutdown(ExecutorService executor) {
         assertTrue(executor.isTerminated());
         assertTrue(executor.isShutdown());
     }
 
-    private static void startAndStopServer(SockiopathServer webSocketServer) throws InterruptedException, ExecutionException {
+    private static void startThenManuallyStopServer(SockiopathServer webSocketServer) throws InterruptedException, ExecutionException {
         webSocketServer.start().get().closeFuture().cancel(false);
         webSocketServer.shutdownAndAwaitTermination();
     }
@@ -129,8 +185,7 @@ public class SockiopathServerTest {
         awaitTermination(executor);
 
         Mockito.verify(loggerMock, Mockito.atLeastOnce()).error("Interruption required during shutdown!");
-        assertTrue(executor.isTerminated());
-        assertTrue(executor.isShutdown());
+        assertTerminationAndShutdown(executor);
         assertTrue(cancelledTasks.size() == 0);
     }
 

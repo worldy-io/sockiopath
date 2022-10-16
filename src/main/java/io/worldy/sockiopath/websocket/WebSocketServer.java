@@ -2,13 +2,13 @@ package io.worldy.sockiopath.websocket;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.worldy.sockiopath.AbstractSockiopathServer;
 import io.worldy.sockiopath.SockiopathServer;
 import io.worldy.sockiopath.StartServerResult;
 import org.slf4j.Logger;
@@ -18,26 +18,16 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-public class WebSocketServer implements SockiopathServer {
+public class WebSocketServer extends AbstractSockiopathServer {
 
     private static Logger logger = LoggerFactory.getLogger(SockiopathServer.class);
-
-    private final ChannelHandler channelHandler;
-
-    private final ExecutorService executorService;
-
-    private ChannelFuture closeFuture;
-    final int port;
-    private int actualPort;
 
     public WebSocketServer(
             ChannelHandler channelHandler,
             ExecutorService executorService,
             int port
     ) {
-        this.channelHandler = channelHandler;
-        this.executorService = executorService;
-        this.port = port;
+        super(channelHandler, executorService, port);
     }
 
     @Override
@@ -65,21 +55,6 @@ public class WebSocketServer implements SockiopathServer {
             }
         });
         return future;
-    }
-
-    @Override
-    public int actualPort() {
-        return actualPort;
-    }
-
-    @Override
-    public ExecutorService getExecutorService() {
-        return executorService;
-    }
-
-    @Override
-    public ChannelFuture getCloseFuture() {
-        return closeFuture;
     }
 
     @Override
