@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class WebSocketHandlerTest {
+class WebSocketServerHandlerTest {
 
     @Test
     void channelRead0BinaryTest() throws Exception {

@@ -25,7 +25,7 @@ import static io.worldy.sockiopath.SockiopathServerHandlerTest.verifyNoWrites;
 import static io.worldy.sockiopath.SockiopathServerHandlerTest.verifyNoWritesOrFlushes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class UdpHandlerTest {
+class UdpServerHandlerTest {
 
     @Test
     void channelRead0Test() throws Exception {

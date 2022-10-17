@@ -1,13 +1,12 @@
-package io.worldy.sockiopath.udp;
+package io.worldy.sockiopath.udp.client;
 
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
+import io.worldy.sockiopath.SockiopathHandler;
 import io.worldy.sockiopath.SockiopathServerHandler;
 import io.worldy.sockiopath.messaging.MessageBus;
 import io.worldy.sockiopath.messaging.SockiopathMessage;
-import io.worldy.sockiopath.session.SessionStore;
-import io.worldy.sockiopath.session.SockiopathSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,32 +15,30 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class UdpServerHandler extends SockiopathServerHandler<DatagramPacket> {
+public class UdpClientHandler extends SockiopathHandler<DatagramPacket> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SockiopathServerHandler.class);
 
-    public UdpServerHandler(
-            SessionStore<SockiopathSession> sessionStore,
+    public UdpClientHandler(
             Map<String, MessageBus> messageHandlers,
             Function<ByteBuffer, Optional<SockiopathMessage>> messageParser,
             Logger logger
     ) {
-        super(sessionStore, messageHandlers, messageParser, logger);
+        super(messageHandlers, messageParser, logger);
     }
 
-    public UdpServerHandler(
-            SessionStore<SockiopathSession> sessionStore,
+    public UdpClientHandler(
             Map<String, MessageBus> messageHandlers,
             char deliminator
+
     ) {
-        this(sessionStore, messageHandlers, getDefaultMessageParser(deliminator), LOGGER);
+        this(messageHandlers, getDefaultMessageParser(deliminator), LOGGER);
     }
 
-    public UdpServerHandler(
-            SessionStore<SockiopathSession> sessionStore,
+    public UdpClientHandler(
             Map<String, MessageBus> messageHandlers
     ) {
-        this(sessionStore, messageHandlers, DEFAULT_MESSAGE_DELIMINATOR);
+        this(messageHandlers, DEFAULT_MESSAGE_DELIMINATOR);
     }
 
     @Override

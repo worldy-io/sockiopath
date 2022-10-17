@@ -52,7 +52,7 @@ public abstract class SockiopathHandler<T> extends SimpleChannelInboundHandler<T
             Map<String, MessageBus> messageHandlers,
             char deliminator
     ) {
-        this(messageHandlers, new DefaultMessageParser(deliminator), LOGGER);
+        this(messageHandlers, getDefaultMessageParser(deliminator), LOGGER);
     }
 
     public SockiopathHandler(
@@ -135,5 +135,9 @@ public abstract class SockiopathHandler<T> extends SimpleChannelInboundHandler<T
             return channelHandlerContext;
         }
         throw new UnsupportedOperationException("Getting the ChannelHandlerContext is only supported for UdpHandlers.");
+    }
+
+    protected static DefaultMessageParser getDefaultMessageParser(char deliminator) {
+        return new DefaultMessageParser(deliminator);
     }
 }

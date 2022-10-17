@@ -20,13 +20,13 @@ import java.util.function.Function;
 
 public class WebSocketServerHandler extends SockiopathServerHandler<Object> {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketServerHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SockiopathServerHandler.class);
     private static final String TEXT_COMMAND_JOIN = "join";
 
-    private static final String DELIMINATOR = "|";
-    private static final String TEXT_RESPONSE_PART_SESSION = "session" + DELIMINATOR;
+    private static final String SESSION_MESSAGE_DELIMINATOR = "|";
+    public static final String TEXT_RESPONSE_PART_SESSION = "session" + SESSION_MESSAGE_DELIMINATOR;
 
-    private static final InetSocketAddress VIRTUAL_INET_SOCKET_ADDRESS = new InetSocketAddress("VIRTUAL_INET_SOCKET_ADDRESS", 42);
+    public static final InetSocketAddress VIRTUAL_INET_SOCKET_ADDRESS = new InetSocketAddress("VIRTUAL_INET_SOCKET_ADDRESS", 42);
 
 
     public WebSocketServerHandler(
@@ -43,14 +43,14 @@ public class WebSocketServerHandler extends SockiopathServerHandler<Object> {
             Map<String, MessageBus> messageHandlers,
             char deliminator
     ) {
-        super(sessionStore, messageHandlers, deliminator);
+        this(sessionStore, messageHandlers, getDefaultMessageParser(deliminator), LOGGER);
     }
 
     public WebSocketServerHandler(
             SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers
     ) {
-        super(sessionStore, messageHandlers);
+        this(sessionStore, messageHandlers, DEFAULT_MESSAGE_DELIMINATOR);
     }
 
     @Override
