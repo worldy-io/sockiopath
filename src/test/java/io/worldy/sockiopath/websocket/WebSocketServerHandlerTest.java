@@ -9,6 +9,7 @@ import io.netty.channel.pool.ChannelPool;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.worldy.sockiopath.SockiopathServerHandler;
+import io.worldy.sockiopath.SockiopathServerHandlerTest;
 import io.worldy.sockiopath.messaging.DefaultMessageParser;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -16,9 +17,9 @@ import org.slf4j.Logger;
 
 import java.util.HashMap;
 
-import static io.worldy.sockiopath.SockiopathServerHandlerTest.getMessageHandlers;
+import static io.worldy.sockiopath.SockiopathHandlerTest.getMessageHandlers;
 import static io.worldy.sockiopath.SockiopathServerHandlerTest.getSessionStore;
-import static io.worldy.sockiopath.SockiopathServerHandlerTest.getWebSocketHandler;
+import static io.worldy.sockiopath.SockiopathServerHandlerTest.getWebSocketServerHandler;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -32,7 +33,7 @@ class WebSocketServerHandlerTest {
         Mockito.when(context.channel()).thenReturn(channel);
         BinaryWebSocketFrame packet = Mockito.mock(BinaryWebSocketFrame.class);
 
-        SockiopathServerHandler<Object> sockiopathServerHandler = getWebSocketHandler(getSessionStore(context));
+        SockiopathServerHandler<Object> sockiopathServerHandler = getWebSocketServerHandler(getSessionStore(context));
 
         ByteBuf content = Unpooled.wrappedBuffer("address-a|sessionId-a|data-a".getBytes());
         Mockito.when(packet.content()).thenReturn(content);
@@ -88,7 +89,7 @@ class WebSocketServerHandlerTest {
     @Test
     void channelRead0TextFrameJoinSessionTest() throws Exception {
 
-        SockiopathServerHandler<Object> sockiopathServerHandler = getWebSocketHandler(new HashMap<>());
+        SockiopathServerHandler<Object> sockiopathServerHandler = SockiopathServerHandlerTest.getWebSocketServerHandler(new HashMap<>());
 
         ChannelHandlerContext ctx1 = mockContext(1);
         sockiopathServerHandler.channelRead0(ctx1, new TextWebSocketFrame("join"));

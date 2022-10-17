@@ -47,24 +47,13 @@ public class WebSocketClientHandler extends SockiopathHandler<Object> {
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object frame) {
-
         if (frame instanceof TextWebSocketFrame textFrame) {
-            String textMessage = textFrame.text();
-            logger.debug("{} received {}", ctx.channel(), textMessage);
-
-            if (textMessage.startsWith(WebSocketServerHandler.TEXT_RESPONSE_PART_SESSION)) {
-                logger.debug("{} SESSION received {}", ctx.channel(), textMessage);
-                logger.debug(ctx.channel().id().asLongText());
-                logger.debug(ctx.channel().id().asShortText());
-            } else {
-                logger.debug("{} MESSAGE received {}", ctx.channel(), textMessage);
-            }
+            logger.debug("MESSAGE received: " + textFrame.text());
         } else if (frame instanceof BinaryWebSocketFrame binaryFrame) {
-            logger.debug("{} BINARY received", ctx.channel());
+            logger.debug("BINARY received");
             super.channelRead0(ctx, WebSocketServerHandler.VIRTUAL_INET_SOCKET_ADDRESS, binaryFrame.content());
         } else {
-            String message = "unsupported frame type: " + frame.getClass().getName();
-            throw new UnsupportedOperationException(message);
+            logger.error("Unsupported frame type: " + frame.getClass().getName());
         }
     }
 

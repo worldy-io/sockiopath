@@ -48,7 +48,7 @@ public class UdpServer extends AbstractSockiopathServer {
                 closeFuture = channel.closeFuture();
                 actualPort = SockiopathServer.getPort(channel);
 
-                if(channelHandler instanceof SockiopathServerHandler<?> sh) {
+                if (channelHandler instanceof SockiopathServerHandler<?> sh) {
                     bootstrap.remoteAddress("localhost", actualPort);
                     sh.setChannelPool(
                             new SimpleChannelPool(bootstrap, new AbstractChannelPoolHandler() {

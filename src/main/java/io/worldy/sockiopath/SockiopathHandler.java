@@ -78,14 +78,16 @@ public abstract class SockiopathHandler<T> extends SimpleChannelInboundHandler<T
                             handler.consumer().apply(sockiopathMessage)
                                     .orTimeout(handler.timeoutMillis(), TimeUnit.MILLISECONDS)
                                     .whenComplete((response, error) -> {
-                                        if (error == null) {
+                                        if (response != null) {
                                             if (isUdp()) {
                                                 context.writeAndFlush(new DatagramPacket(Unpooled.copiedBuffer(response), sender));
                                             } else {
                                                 context.channel().writeAndFlush(new BinaryWebSocketFrame(Unpooled.copiedBuffer(response)));
                                             }
-                                        } else {
+                                        } else if (error != null) {
                                             logger.error(error.getMessage(), error);
+                                        } else {
+                                            logger.debug("No response from message bus: " + sockiopathMessage.address());
                                         }
                                     });
                         },

@@ -18,7 +18,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
-import static io.worldy.sockiopath.SockiopathServerHandlerTest.getMessageHandlers;
+import static io.worldy.sockiopath.SockiopathHandlerTest.getMessageHandlers;
 import static io.worldy.sockiopath.SockiopathServerHandlerTest.getSessionStore;
 import static io.worldy.sockiopath.SockiopathServerHandlerTest.getUdpHandler;
 import static io.worldy.sockiopath.SockiopathServerHandlerTest.verifyNoWrites;

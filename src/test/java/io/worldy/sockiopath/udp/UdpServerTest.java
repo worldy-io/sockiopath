@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static io.worldy.sockiopath.SockiopathHandlerTest.getMessageHandlers;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,7 +65,7 @@ public class UdpServerTest {
                 "sessionId-a", new SockiopathSession(null)
         );
         UdpServer udpServer = new UdpServer(
-                new UdpServerHandler(SockiopathServerHandlerTest.getSessionStore(sessionMap), SockiopathServerHandlerTest.getMessageHandlers()),
+                new UdpServerHandler(SockiopathServerHandlerTest.getSessionStore(sessionMap), getMessageHandlers()),
                 Executors.newFixedThreadPool(1),
                 0
         );
