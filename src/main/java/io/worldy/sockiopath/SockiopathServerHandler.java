@@ -2,7 +2,7 @@ package io.worldy.sockiopath;
 
 
 import io.netty.channel.ChannelHandlerContext;
-import io.worldy.sockiopath.messaging.DefaultMessageParser;
+import io.netty.channel.pool.ChannelPool;
 import io.worldy.sockiopath.messaging.MessageBus;
 import io.worldy.sockiopath.messaging.SockiopathMessage;
 import io.worldy.sockiopath.session.SessionStore;
@@ -35,19 +35,8 @@ public abstract class SockiopathServerHandler<T> extends SockiopathHandler<T> {
         this.sessionStore = sessionStore;
     }
 
-    public SockiopathServerHandler(
-            SessionStore<SockiopathSession> sessionStore,
-            Map<String, MessageBus> messageHandlers,
-            char deliminator
-    ) {
-        this(sessionStore, messageHandlers, new DefaultMessageParser(deliminator), LOGGER);
-    }
-
-    public SockiopathServerHandler(
-            SessionStore<SockiopathSession> sessionStore,
-            Map<String, MessageBus> messageHandlers
-    ) {
-        this(sessionStore, messageHandlers, DEFAULT_MESSAGE_DELIMINATOR);
+    public void setChannelPool(ChannelPool channelPool) {
+        throw new UnsupportedOperationException();
     }
 
     protected void process(SockiopathMessage sockiopathMessage, ChannelHandlerContext context, InetSocketAddress sender) {

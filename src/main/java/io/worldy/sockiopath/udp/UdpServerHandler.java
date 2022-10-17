@@ -1,8 +1,11 @@
 package io.worldy.sockiopath.udp;
 
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.socket.DatagramPacket;
+import io.netty.util.concurrent.FutureListener;
 import io.worldy.sockiopath.SockiopathServerHandler;
 import io.worldy.sockiopath.messaging.MessageBus;
 import io.worldy.sockiopath.messaging.SockiopathMessage;
@@ -19,6 +22,8 @@ import java.util.function.Function;
 public class UdpServerHandler extends SockiopathServerHandler<DatagramPacket> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SockiopathServerHandler.class);
+
+    protected ChannelPool channelPool;
 
     public UdpServerHandler(
             SessionStore<SockiopathSession> sessionStore,
@@ -52,6 +57,23 @@ public class UdpServerHandler extends SockiopathServerHandler<DatagramPacket> {
 
     @Override
     public void channelRead0(ChannelHandlerContext channelHandlerContext, DatagramPacket datagramPacket) throws Exception {
-        super.channelRead0(channelHandlerContext, datagramPacket.sender(), datagramPacket.content());
+        if (channelPool != null) {
+            DatagramPacket copy = datagramPacket.copy();
+            Runnable channelRead = () ->
+                    super.channelRead0(channelHandlerContext, datagramPacket.sender(), copy.content());
+            channelPool.acquire().addListener((FutureListener<Channel>) f1 -> {
+                if (f1.isSuccess()) {
+                    Channel ch = f1.getNow();
+                    channelRead.run();
+                    channelPool.release(ch);
+                }
+            });
+        } else {
+            super.channelRead0(channelHandlerContext, datagramPacket.sender(), datagramPacket.content());
+        }
+    }
+
+    public void setChannelPool(ChannelPool channelPool) {
+        this.channelPool = channelPool;
     }
 }

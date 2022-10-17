@@ -48,19 +48,6 @@ public abstract class SockiopathHandler<T> extends SimpleChannelInboundHandler<T
         this.logger = logger;
     }
 
-    public SockiopathHandler(
-            Map<String, MessageBus> messageHandlers,
-            char deliminator
-    ) {
-        this(messageHandlers, getDefaultMessageParser(deliminator), LOGGER);
-    }
-
-    public SockiopathHandler(
-            Map<String, MessageBus> messageHandlers
-    ) {
-        this(messageHandlers, DEFAULT_MESSAGE_DELIMINATOR);
-    }
-
     public void channelRead0(ChannelHandlerContext context, InetSocketAddress sender, ByteBuf payload) {
         messageParser.apply(payload.copy().nioBuffer())
                 .ifPresentOrElse(

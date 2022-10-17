@@ -6,9 +6,12 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.pool.AbstractChannelPoolHandler;
+import io.netty.channel.pool.SimpleChannelPool;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.worldy.sockiopath.AbstractSockiopathServer;
 import io.worldy.sockiopath.SockiopathServer;
+import io.worldy.sockiopath.SockiopathServerHandler;
 import io.worldy.sockiopath.StartServerResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +47,19 @@ public class UdpServer extends AbstractSockiopathServer {
                 Channel channel = bootstrap.bind(port).sync().channel();
                 closeFuture = channel.closeFuture();
                 actualPort = SockiopathServer.getPort(channel);
+
+                if(channelHandler instanceof SockiopathServerHandler<?> sh) {
+                    bootstrap.remoteAddress("localhost", actualPort);
+                    sh.setChannelPool(
+                            new SimpleChannelPool(bootstrap, new AbstractChannelPoolHandler() {
+                                @Override
+                                public void channelCreated(Channel channel) throws Exception {
+                                    logger.debug("Channel created in pool");
+                                }
+                            })
+                    );
+                }
+
                 future.complete(new StartServerResult(actualPort, closeFuture, this));
                 closeFuture.await();
             } catch (Exception ex) {

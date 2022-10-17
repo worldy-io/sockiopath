@@ -7,7 +7,9 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import io.worldy.sockiopath.CountDownLatchChannelHandler;
 import io.worldy.sockiopath.SockiopathServer;
+import io.worldy.sockiopath.SockiopathServerHandlerTest;
 import io.worldy.sockiopath.StartServerResult;
+import io.worldy.sockiopath.session.SockiopathSession;
 import io.worldy.sockiopath.udp.client.BootstrappedUdpClient;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -41,7 +44,35 @@ public class UdpServerTest {
         StartServerResult startServerResult = udpServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get();
         int port = startServerResult.port();
         String expectedResponse = "hello";
-        String response = request("hello", expectedResponse.getBytes().length, port);
+        String response = request("hello", expectedResponse.getBytes().length, port, 1000);
+        assertEquals(expectedResponse, response);
+        assertEquals(port, udpServer.actualPort());
+
+        if (!startServerResult.closeFuture().cancel(true)) {
+            fail("unable to stop server.");
+        }
+        if (!startServerResult.closeFuture().await(1000, TimeUnit.MILLISECONDS)) {
+            fail("server took too long to shut down.");
+        }
+    }
+
+
+    @Test
+    void channelPoolingTest() throws InterruptedException, ExecutionException {
+
+        Map<String, SockiopathSession> sessionMap = Map.of(
+                "sessionId-a", new SockiopathSession(null)
+        );
+        UdpServer udpServer = new UdpServer(
+                new UdpServerHandler(SockiopathServerHandlerTest.getSessionStore(sessionMap), SockiopathServerHandlerTest.getMessageHandlers()),
+                Executors.newFixedThreadPool(1),
+                0
+        );
+
+        StartServerResult startServerResult = udpServer.start().orTimeout(1000, TimeUnit.MILLISECONDS).get();
+        int port = startServerResult.port();
+        String expectedResponse = "response-a";
+        String response = request("address-a|sessionId-a|data-a", expectedResponse.getBytes().length, port, 2000);
         assertEquals(expectedResponse, response);
         assertEquals(port, udpServer.actualPort());
 
@@ -105,7 +136,7 @@ public class UdpServerTest {
         assertThat(exception.getCause(), instanceOf(BindException.class));
     }
 
-    public static String request(String request, int expectedResponseSize, int port) {
+    private static String request(String request, int expectedResponseSize, int port) {
         try (DatagramSocket socket = new DatagramSocket()) {
 
             InetAddress host = InetAddress.getByName("localhost");
@@ -123,6 +154,15 @@ public class UdpServerTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String request(String request, int expectedResponseSize, int port, int timeout) throws ExecutionException, InterruptedException {
+        CompletableFuture<String> responseFuture = new CompletableFuture<>();
+
+        Executors.newFixedThreadPool(1).submit(() -> {
+            responseFuture.complete(request(request, expectedResponseSize, port));
+        });
+        return responseFuture.orTimeout(timeout, TimeUnit.MILLISECONDS).get();
     }
 
     private static SimpleChannelInboundHandler<DatagramPacket> getEchoChannelHandler() {
