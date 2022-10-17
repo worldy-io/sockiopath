@@ -28,8 +28,6 @@ import java.util.function.Supplier;
 public class SockiopathCommandLine {
 
     private static final Logger logger = LoggerFactory.getLogger(SockiopathCommandLine.class);
-
-    private static final char DELIMINATOR = '|';
     private final Options options;
 
     public SockiopathCommandLine(Options options) {
@@ -50,6 +48,13 @@ public class SockiopathCommandLine {
 
 
     public String run(BufferedReader reader) throws ExecutionException, InterruptedException, IOException {
+
+        logger.debug("webSocketHost" + options.webSocketHost());
+        logger.debug("webSocketPort" + options.webSocketPort());
+        logger.debug("udpHost" + options.udpHost());
+        logger.debug("udpPort" + options.udpPort());
+        logger.debug("client" + options.client());
+        logger.debug("server" + options.server());
 
         SessionStore<SockiopathSession> sessionStore = new MapBackedSessionStore(new HashMap<>());
 
