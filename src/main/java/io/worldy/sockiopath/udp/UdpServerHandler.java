@@ -66,6 +66,8 @@ public class UdpServerHandler extends SockiopathServerHandler<DatagramPacket> {
                     Channel ch = f1.getNow();
                     channelRead.run();
                     channelPool.release(ch);
+                } else {
+                    logger.error("Error acquiring channel from pool. " + f1.cause().getMessage());
                 }
             });
         } else {

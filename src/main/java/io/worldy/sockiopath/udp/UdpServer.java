@@ -7,6 +7,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.pool.AbstractChannelPoolHandler;
+import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.SimpleChannelPool;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.worldy.sockiopath.AbstractSockiopathServer;
@@ -48,16 +49,8 @@ public class UdpServer extends AbstractSockiopathServer {
                 closeFuture = channel.closeFuture();
                 actualPort = SockiopathServer.getPort(channel);
 
-                if (channelHandler instanceof SockiopathServerHandler<?> sh) {
-                    bootstrap.remoteAddress("localhost", actualPort);
-                    sh.setChannelPool(
-                            new SimpleChannelPool(bootstrap, new AbstractChannelPoolHandler() {
-                                @Override
-                                public void channelCreated(Channel channel) throws Exception {
-                                    logger.debug("Channel created in pool");
-                                }
-                            })
-                    );
+                if (channelHandler instanceof SockiopathServerHandler<?> sockiopathServerHandler) {
+                    sockiopathServerHandler.setChannelPool(channelPoolInstance(bootstrap, actualPort));
                 }
 
                 future.complete(new StartServerResult(actualPort, closeFuture, this));
@@ -69,6 +62,16 @@ public class UdpServer extends AbstractSockiopathServer {
             }
         });
         return future;
+    }
+
+    protected ChannelPool channelPoolInstance(Bootstrap bootstrap, int actualPort) {
+        bootstrap.remoteAddress("localhost", actualPort);
+        return new SimpleChannelPool(bootstrap, new AbstractChannelPoolHandler() {
+            @Override
+            public void channelCreated(Channel channel) throws Exception {
+                logger.debug("Channel created in pool");
+            }
+        });
     }
 
     @Override
