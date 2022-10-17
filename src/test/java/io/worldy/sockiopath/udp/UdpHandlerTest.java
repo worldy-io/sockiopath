@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
-import io.worldy.sockiopath.SockiopathHandler;
+import io.worldy.sockiopath.SockiopathServerHandler;
 import io.worldy.sockiopath.messaging.DefaultMessageParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,11 +18,11 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
-import static io.worldy.sockiopath.SockiopathHandlerTest.getMessageHandlers;
-import static io.worldy.sockiopath.SockiopathHandlerTest.getSessionStore;
-import static io.worldy.sockiopath.SockiopathHandlerTest.getUdpHandler;
-import static io.worldy.sockiopath.SockiopathHandlerTest.verifyNoWrites;
-import static io.worldy.sockiopath.SockiopathHandlerTest.verifyNoWritesOrFlushes;
+import static io.worldy.sockiopath.SockiopathServerHandlerTest.getMessageHandlers;
+import static io.worldy.sockiopath.SockiopathServerHandlerTest.getSessionStore;
+import static io.worldy.sockiopath.SockiopathServerHandlerTest.getUdpHandler;
+import static io.worldy.sockiopath.SockiopathServerHandlerTest.verifyNoWrites;
+import static io.worldy.sockiopath.SockiopathServerHandlerTest.verifyNoWritesOrFlushes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UdpHandlerTest {
@@ -31,34 +31,34 @@ class UdpHandlerTest {
     void channelRead0Test() throws Exception {
         ChannelHandlerContext context = Mockito.mock(ChannelHandlerContext.class);
         DatagramPacket packet = Mockito.mock(DatagramPacket.class);
-        SockiopathHandler<DatagramPacket> sockioPathHandler = getUdpHandler(context);
+        SockiopathServerHandler<DatagramPacket> sockioPathServerHandler = getUdpHandler(context);
 
         ByteBuf content = Unpooled.wrappedBuffer("address-a|sessionId-a|data-a".getBytes());
         Mockito.when(packet.content()).thenReturn(content);
         InetSocketAddress sender = Mockito.mock(InetSocketAddress.class);
         Mockito.when(packet.sender()).thenReturn(sender);
 
-        sockioPathHandler.channelRead0(context, packet);
+        sockioPathServerHandler.channelRead0(context, packet);
         Mockito.verify(context, Mockito.times(1)).writeAndFlush(Mockito.any());
-        assertEquals(sender, sockioPathHandler.getSession("sessionId-a").getUdpSocketAddress());
-        assertEquals(context, sockioPathHandler.getSession("sessionId-a").getUdpContext());
+        assertEquals(sender, sockioPathServerHandler.getSession("sessionId-a").getUdpSocketAddress());
+        assertEquals(context, sockioPathServerHandler.getSession("sessionId-a").getUdpContext());
     }
 
     @Test
     void channelRead0DeliminatorSpecifiedTest() throws Exception {
         ChannelHandlerContext context = Mockito.mock(ChannelHandlerContext.class);
         DatagramPacket packet = Mockito.mock(DatagramPacket.class);
-        SockiopathHandler<DatagramPacket> sockioPathHandler = new UdpHandler(getSessionStore(context), getMessageHandlers(), '|');
+        SockiopathServerHandler<DatagramPacket> sockioPathServerHandler = new UdpServerHandler(getSessionStore(context), getMessageHandlers(), '|');
 
         ByteBuf content = Unpooled.wrappedBuffer("address-a|sessionId-a|data-a".getBytes());
         Mockito.when(packet.content()).thenReturn(content);
         InetSocketAddress sender = Mockito.mock(InetSocketAddress.class);
         Mockito.when(packet.sender()).thenReturn(sender);
 
-        sockioPathHandler.channelRead0(context, packet);
+        sockioPathServerHandler.channelRead0(context, packet);
         Mockito.verify(context, Mockito.times(1)).writeAndFlush(Mockito.any());
-        assertEquals(sender, sockioPathHandler.getSession("sessionId-a").getUdpSocketAddress());
-        assertEquals(context, sockioPathHandler.getSession("sessionId-a").getUdpContext());
+        assertEquals(sender, sockioPathServerHandler.getSession("sessionId-a").getUdpSocketAddress());
+        assertEquals(context, sockioPathServerHandler.getSession("sessionId-a").getUdpContext());
     }
 
     @Test
@@ -66,14 +66,14 @@ class UdpHandlerTest {
         ChannelHandlerContext context = Mockito.mock(ChannelHandlerContext.class);
         DatagramPacket packet = Mockito.mock(DatagramPacket.class);
         Logger loggerMock = Mockito.mock(Logger.class);
-        SockiopathHandler<DatagramPacket> sockioPathHandler = new UdpHandler(getSessionStore(context), getMessageHandlers(), new DefaultMessageParser('|'), loggerMock);
+        SockiopathServerHandler<DatagramPacket> sockioPathServerHandler = new UdpServerHandler(getSessionStore(context), getMessageHandlers(), new DefaultMessageParser('|'), loggerMock);
 
         ByteBuf content = Unpooled.wrappedBuffer("address-timeout|sessionId-timeout|data-timeout".getBytes());
         Mockito.when(packet.content()).thenReturn(content);
         InetSocketAddress sender = Mockito.mock(InetSocketAddress.class);
         Mockito.when(packet.sender()).thenReturn(sender);
 
-        sockioPathHandler.channelRead0(context, packet);
+        sockioPathServerHandler.channelRead0(context, packet);
         verifyNoWritesOrFlushes(context);
         Mockito.verify(loggerMock, Mockito.times(1)).error(Mockito.any(), Mockito.any(TimeoutException.class));
     }
@@ -82,7 +82,7 @@ class UdpHandlerTest {
     void channelRead0NoSessionTest() throws Exception {
         ChannelHandlerContext context = Mockito.mock(ChannelHandlerContext.class);
         DatagramPacket packet = Mockito.mock(DatagramPacket.class);
-        SockiopathHandler<DatagramPacket> sockioPathHandler = getUdpHandler(context);
+        SockiopathServerHandler<DatagramPacket> sockioPathServerHandler = getUdpHandler(context);
 
         ByteBuf content = Unpooled.wrappedBuffer("address-b|sessionId-b|data-b".getBytes());
         Mockito.when(packet.content()).thenReturn(content);
@@ -92,7 +92,7 @@ class UdpHandlerTest {
         Mockito.when(sender.getAddress()).thenReturn(senderAddress);
         Mockito.when(packet.sender()).thenReturn(sender);
 
-        sockioPathHandler.channelRead0(context, packet);
+        sockioPathServerHandler.channelRead0(context, packet);
         verifyNoWritesOrFlushes(context);
     }
 
@@ -101,7 +101,7 @@ class UdpHandlerTest {
         ChannelHandlerContext context = Mockito.mock(ChannelHandlerContext.class);
         DatagramPacket packet = Mockito.mock(DatagramPacket.class);
         Logger loggerMock = Mockito.mock(Logger.class);
-        SockiopathHandler<DatagramPacket> sockioPathHandler = new UdpHandler(getSessionStore(context), getMessageHandlers(), new DefaultMessageParser('|'), loggerMock);
+        SockiopathServerHandler<DatagramPacket> sockioPathServerHandler = new UdpServerHandler(getSessionStore(context), getMessageHandlers(), new DefaultMessageParser('|'), loggerMock);
 
         ByteBuf content = Unpooled.wrappedBuffer("address_noAddress|sessionId-noAddress|data_noAddress".getBytes());
         Mockito.when(packet.content()).thenReturn(content);
@@ -111,7 +111,7 @@ class UdpHandlerTest {
         Mockito.when(sender.getAddress()).thenReturn(senderAddress);
         Mockito.when(packet.sender()).thenReturn(sender);
 
-        sockioPathHandler.channelRead0(context, packet);
+        sockioPathServerHandler.channelRead0(context, packet);
         verifyNoWritesOrFlushes(context);
         Mockito.verify(loggerMock, Mockito.times(1)).debug("No message handler for: address_noAddress");
     }
@@ -130,7 +130,7 @@ class UdpHandlerTest {
         DatagramPacket packet = Mockito.mock(DatagramPacket.class);
         Logger loggerMock = Mockito.mock(Logger.class);
         Mockito.when(loggerMock.isDebugEnabled()).thenReturn(debugEnabled);
-        SockiopathHandler<DatagramPacket> sockioPathHandler = new UdpHandler(null, null, new DefaultMessageParser('|'), loggerMock);
+        SockiopathServerHandler<DatagramPacket> sockioPathServerHandler = new UdpServerHandler(null, null, new DefaultMessageParser('|'), loggerMock);
 
         ByteBuf content = Unpooled.wrappedBuffer("noAddress".getBytes());
         Mockito.when(packet.content()).thenReturn(content);
@@ -140,7 +140,7 @@ class UdpHandlerTest {
         Mockito.when(sender.getAddress()).thenReturn(senderAddress);
         Mockito.when(packet.sender()).thenReturn(sender);
 
-        sockioPathHandler.channelRead0(context, packet);
+        sockioPathServerHandler.channelRead0(context, packet);
         verifyNoWritesOrFlushes(context);
         Mockito.verify(loggerMock, Mockito.times(1)).error(expectedDebugLog);
     }
@@ -148,7 +148,7 @@ class UdpHandlerTest {
     @Test
     void channelRegistered() throws Exception {
         ChannelHandlerContext context = Mockito.mock(ChannelHandlerContext.class);
-        SockiopathHandler<DatagramPacket> handler = getUdpHandler(context);
+        SockiopathServerHandler<DatagramPacket> handler = getUdpHandler(context);
         handler.channelRegistered(context);
         Mockito.verify(context, Mockito.times(1)).fireChannelRegistered();
         assertEquals(context, handler.getChannelHandlerContext());
@@ -167,9 +167,9 @@ class UdpHandlerTest {
     void exceptionCaughtTest() {
         ChannelHandlerContext context = Mockito.mock(ChannelHandlerContext.class);
         Logger loggerMock = Mockito.mock(Logger.class);
-        SockiopathHandler<DatagramPacket> sockioPathHandler = new UdpHandler(null, null, new DefaultMessageParser('|'), loggerMock);
+        SockiopathServerHandler<DatagramPacket> sockioPathServerHandler = new UdpServerHandler(null, null, new DefaultMessageParser('|'), loggerMock);
         RuntimeException runtimeException = new RuntimeException("runtimeException message");
-        sockioPathHandler.exceptionCaught(context, runtimeException);
+        sockioPathServerHandler.exceptionCaught(context, runtimeException);
 
         Mockito.verify(loggerMock, Mockito.times(1)).error("Error handling connection: runtimeException message", runtimeException);
         Mockito.verify(context, Mockito.never()).close();

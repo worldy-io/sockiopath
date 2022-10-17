@@ -6,8 +6,8 @@ import io.worldy.sockiopath.messaging.MessageBus;
 import io.worldy.sockiopath.session.MapBackedSessionStore;
 import io.worldy.sockiopath.session.SessionStore;
 import io.worldy.sockiopath.session.SockiopathSession;
-import io.worldy.sockiopath.udp.UdpHandler;
-import io.worldy.sockiopath.websocket.WebSocketHandler;
+import io.worldy.sockiopath.udp.UdpServerHandler;
+import io.worldy.sockiopath.websocket.WebSocketServerHandler;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -16,12 +16,12 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class SockiopathHandlerTest {
+public class SockiopathServerHandlerTest {
 
     @Test
     void channelRegistered() throws Exception {
         ChannelHandlerContext context = Mockito.mock(ChannelHandlerContext.class);
-        SockiopathHandler<Object> handler = getWebSocketHandler(getSessionStore(context));
+        SockiopathServerHandler<Object> handler = getWebSocketHandler(getSessionStore(context));
         handler.channelRegistered(context);
         Mockito.verify(context, Mockito.times(1)).fireChannelRegistered();
         assertNull(handler.channelHandlerContext);
@@ -38,20 +38,20 @@ public class SockiopathHandlerTest {
         Mockito.verify(mockedContext, Mockito.times(0)).flush();
     }
 
-    public static SockiopathHandler<DatagramPacket> getUdpHandler(ChannelHandlerContext ctx) {
+    public static SockiopathServerHandler<DatagramPacket> getUdpHandler(ChannelHandlerContext ctx) {
         SessionStore<SockiopathSession> sessionStore = getSessionStore(ctx);
         Map<String, MessageBus> messageHandlers = getMessageHandlers();
-        return new UdpHandler(sessionStore, messageHandlers);
+        return new UdpServerHandler(sessionStore, messageHandlers);
     }
 
-    public static SockiopathHandler<Object> getWebSocketHandler(Map<String, SockiopathSession> sessions) {
+    public static SockiopathServerHandler<Object> getWebSocketHandler(Map<String, SockiopathSession> sessions) {
         SessionStore<SockiopathSession> sessionStore = getSessionStore(sessions);
         return getWebSocketHandler(sessionStore);
     }
 
-    public static SockiopathHandler<Object> getWebSocketHandler(SessionStore<SockiopathSession> sessionStore) {
+    public static SockiopathServerHandler<Object> getWebSocketHandler(SessionStore<SockiopathSession> sessionStore) {
         Map<String, MessageBus> messageHandlers = getMessageHandlers();
-        return new WebSocketHandler(sessionStore, messageHandlers);
+        return new WebSocketServerHandler(sessionStore, messageHandlers);
     }
 
     public static Map<String, MessageBus> getMessageHandlers() {

@@ -10,12 +10,9 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.worldy.sockiopath.messaging.DefaultMessageParser;
 import io.worldy.sockiopath.messaging.MessageBus;
 import io.worldy.sockiopath.messaging.SockiopathMessage;
-import io.worldy.sockiopath.session.SessionStore;
-import io.worldy.sockiopath.session.SockiopathSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -27,47 +24,41 @@ public abstract class SockiopathHandler<T> extends SimpleChannelInboundHandler<T
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SockiopathHandler.class);
 
-    public static final char DEFAULT_MESSAGE_DELIMINATOR = '|';
-    private static final String PARSE_MESSAGE_ERROR_MESSAGE = "Unable to parse message. sender: [%s]. content: ";
-    private static final String ENABLE_DEBUGGING_MESSAGE = "Enable debugging to see content";
-    private static final String NO_SESSION_ERROR_MESSAGE = "No session for request. sender: [%s].";
-    private static final String HANDLE_MESSAGE_DEBUG_MESSAGE = "Handling message. address: [%s]. content: ";
+    protected static final char DEFAULT_MESSAGE_DELIMINATOR = '|';
+    protected static final String PARSE_MESSAGE_ERROR_MESSAGE = "Unable to parse message. sender: [%s]. content: ";
+    protected static final String ENABLE_DEBUGGING_MESSAGE = "Enable debugging to see content";
+    protected static final String NO_SESSION_ERROR_MESSAGE = "No session for request. sender: [%s].";
+    protected static final String HANDLE_MESSAGE_DEBUG_MESSAGE = "Handling message. address: [%s]. content: ";
 
-    protected SessionStore<SockiopathSession> sessionStore;
+    protected final Function<ByteBuffer, Optional<SockiopathMessage>> messageParser;
 
-    private final Function<ByteBuffer, Optional<SockiopathMessage>> messageParser;
+    protected final Map<String, MessageBus> messageHandlers;
 
-    private final Map<String, MessageBus> messageHandlers;
-
-    private final Logger logger;
+    protected final Logger logger;
 
     ChannelHandlerContext channelHandlerContext;
 
     public SockiopathHandler(
-            SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers,
             Function<ByteBuffer, Optional<SockiopathMessage>> messageParser,
             Logger logger
     ) {
-        this.sessionStore = sessionStore;
         this.messageParser = messageParser;
         this.messageHandlers = messageHandlers;
         this.logger = logger;
     }
 
     public SockiopathHandler(
-            SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers,
             char deliminator
     ) {
-        this(sessionStore, messageHandlers, new DefaultMessageParser(deliminator), LOGGER);
+        this(messageHandlers, new DefaultMessageParser(deliminator), LOGGER);
     }
 
     public SockiopathHandler(
-            SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers
     ) {
-        this(sessionStore, messageHandlers, DEFAULT_MESSAGE_DELIMINATOR);
+        this(messageHandlers, DEFAULT_MESSAGE_DELIMINATOR);
     }
 
     public void channelRead0(ChannelHandlerContext context, InetSocketAddress sender, ByteBuf payload) {
@@ -89,20 +80,6 @@ public abstract class SockiopathHandler<T> extends SimpleChannelInboundHandler<T
     }
 
     protected void process(SockiopathMessage sockiopathMessage, ChannelHandlerContext context, InetSocketAddress sender) {
-
-        SockiopathSession session = sessionStore.get().apply(sockiopathMessage.sessionId());
-        if (session == null) {
-            Optional<InetAddress> address = Optional.ofNullable(sender.getAddress());
-            logger.debug(
-                    NO_SESSION_ERROR_MESSAGE.formatted(address.map(InetAddress::getCanonicalHostName).orElse(sender.getHostName()))
-            );
-            return;
-        }
-        if (isUdp()) {
-            session.withUdpSocketAddress(sender);
-            session.withUdpContext(context);
-        }
-
 
         Optional.ofNullable(messageHandlers.get(sockiopathMessage.address()))
                 .ifPresentOrElse(
@@ -128,14 +105,6 @@ public abstract class SockiopathHandler<T> extends SimpleChannelInboundHandler<T
                         () -> logger.debug("No message handler for: " + sockiopathMessage.address())
                 );
 
-    }
-
-    public SockiopathSession getSession(String id) {
-        return sessionStore.get().apply(id);
-    }
-
-    public int getSessionCount() {
-        return sessionStore.size().get();
     }
 
     protected abstract boolean isUdp();

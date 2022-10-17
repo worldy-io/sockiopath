@@ -4,7 +4,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.worldy.sockiopath.SockiopathHandler;
+import io.worldy.sockiopath.SockiopathServerHandler;
 import io.worldy.sockiopath.messaging.MessageBus;
 import io.worldy.sockiopath.messaging.SockiopathMessage;
 import io.worldy.sockiopath.session.SessionStore;
@@ -18,9 +18,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class WebSocketHandler extends SockiopathHandler<Object> {
+public class WebSocketServerHandler extends SockiopathServerHandler<Object> {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketServerHandler.class);
     private static final String TEXT_COMMAND_JOIN = "join";
 
     private static final String DELIMINATOR = "|";
@@ -29,7 +29,7 @@ public class WebSocketHandler extends SockiopathHandler<Object> {
     private static final InetSocketAddress VIRTUAL_INET_SOCKET_ADDRESS = new InetSocketAddress("VIRTUAL_INET_SOCKET_ADDRESS", 42);
 
 
-    public WebSocketHandler(
+    public WebSocketServerHandler(
             SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers,
             Function<ByteBuffer, Optional<SockiopathMessage>> messageParser,
@@ -38,7 +38,7 @@ public class WebSocketHandler extends SockiopathHandler<Object> {
         super(sessionStore, messageHandlers, messageParser, logger);
     }
 
-    public WebSocketHandler(
+    public WebSocketServerHandler(
             SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers,
             char deliminator
@@ -46,7 +46,7 @@ public class WebSocketHandler extends SockiopathHandler<Object> {
         super(sessionStore, messageHandlers, deliminator);
     }
 
-    public WebSocketHandler(
+    public WebSocketServerHandler(
             SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers
     ) {

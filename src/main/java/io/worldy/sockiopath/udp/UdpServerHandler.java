@@ -3,7 +3,7 @@ package io.worldy.sockiopath.udp;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
-import io.worldy.sockiopath.SockiopathHandler;
+import io.worldy.sockiopath.SockiopathServerHandler;
 import io.worldy.sockiopath.messaging.MessageBus;
 import io.worldy.sockiopath.messaging.SockiopathMessage;
 import io.worldy.sockiopath.session.SessionStore;
@@ -15,9 +15,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class UdpHandler extends SockiopathHandler<DatagramPacket> {
+public class UdpServerHandler extends SockiopathServerHandler<DatagramPacket> {
 
-    public UdpHandler(
+    public UdpServerHandler(
             SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers,
             Function<ByteBuffer, Optional<SockiopathMessage>> messageParser,
@@ -26,7 +26,7 @@ public class UdpHandler extends SockiopathHandler<DatagramPacket> {
         super(sessionStore, messageHandlers, messageParser, logger);
     }
 
-    public UdpHandler(
+    public UdpServerHandler(
             SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers,
             char deliminator
@@ -34,7 +34,7 @@ public class UdpHandler extends SockiopathHandler<DatagramPacket> {
         super(sessionStore, messageHandlers, deliminator);
     }
 
-    public UdpHandler(
+    public UdpServerHandler(
             SessionStore<SockiopathSession> sessionStore,
             Map<String, MessageBus> messageHandlers
     ) {
