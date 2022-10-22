@@ -4,11 +4,16 @@ package io.worldy.sockiopath.cli;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
+import io.worldy.sockiopath.SockioPathClient;
+import io.worldy.sockiopath.Sockiopath;
 import io.worldy.sockiopath.SockiopathServer;
+import io.worldy.sockiopath.messaging.MessageBus;
 import io.worldy.sockiopath.session.MapBackedSessionStore;
 import io.worldy.sockiopath.session.SessionStore;
 import io.worldy.sockiopath.session.SockiopathSession;
 import io.worldy.sockiopath.websocket.WebSocketServer;
+import io.worldy.sockiopath.websocket.WebSocketServerHandler;
+import io.worldy.sockiopath.websocket.ui.WebSocketIndexPageHandler;
 import org.apache.commons.cli.HelpFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -49,12 +55,12 @@ public class SockiopathCommandLine {
 
     public String run(BufferedReader reader) throws ExecutionException, InterruptedException, IOException {
 
-        logger.debug("webSocketHost" + options.webSocketHost());
-        logger.debug("webSocketPort" + options.webSocketPort());
-        logger.debug("udpHost" + options.udpHost());
-        logger.debug("udpPort" + options.udpPort());
-        logger.debug("client" + options.client());
-        logger.debug("server" + options.server());
+        logger.debug("webSocketHost: " + options.webSocketHost());
+        logger.debug("webSocketPort: " + options.webSocketPort());
+        logger.debug("udpHost: " + options.udpHost());
+        logger.debug("udpPort: " + options.udpPort());
+        logger.debug("client: " + options.client());
+        logger.debug("server: " + options.server());
 
         SessionStore<SockiopathSession> sessionStore = new MapBackedSessionStore(new HashMap<>());
 
@@ -64,7 +70,11 @@ public class SockiopathCommandLine {
                 startWebSocketServer(options, webSocketServerExecutorService, sessionStore)
         );
 
-        if (maybeWebSocketServer.isEmpty()) {
+        Optional<SockioPathClient> maybeWebSocketClient = Optional.ofNullable(
+                startWebSocketClient(options, maybeWebSocketServer.map(SockiopathServer::actualPort).orElse(options.webSocketPort()))
+        );
+
+        if (maybeWebSocketServer.isEmpty() && maybeWebSocketClient.isEmpty()) {
             return "No server or client was started. Closing CLI.";
         }
 
@@ -74,44 +84,21 @@ public class SockiopathCommandLine {
             if (command == null) {
                 continue;
             }
-            System.out.println("command: " + command);
 
-            //            maybeClientChannel.ifPresent(channel -> {
-            //                channel.writeAndFlush(new TextWebSocketFrame(command));
-            //            });
-            //
-            //            if(responseMap.get(0) != null) {
-            //                System.out.println(((TextWebSocketFrame)responseMap.get(0)).text());
-            //            }
+            //System.out.println("command: " + command);
 
             if (command.equals("quit")) {
                 maybeWebSocketServer.ifPresent(SockiopathServer::stop);
+                maybeWebSocketClient.ifPresent(SockioPathClient::shutdownClient);
                 quit = true;
+            } else {
+                maybeWebSocketClient.ifPresent(client -> {
+                    client.sendWebSocketMessage("chat", command);
+                });
             }
         }
-        return "stopping WebSocket server...";
+        return "stopping Sockiopath CLI...";
     }
-
-
-//    private static Channel startWebSocketClient(Options options, int port, AtomicInteger messageIndexer, Map<Integer, Object> responseMap) throws InterruptedException {
-//        final Channel channel;
-//        if (options.client()) {
-//            var client = new BootstrappedWebSocketClient(
-//                    "localhost",
-//                    port,
-//                    "/websocket",
-//                    new CommandLineClientHandler(messageIndexer, responseMap),
-//                    null,
-//                    500,
-//                    500
-//            );
-//            client.startup();
-//            channel = client.getChannel();
-//        } else {
-//            channel = null;
-//        }
-//        return channel;
-//    }
 
     static SockiopathServer startWebSocketServer(Options options, ExecutorService webSocketServerExecutorService, SessionStore<SockiopathSession> sessionStore) throws ExecutionException, InterruptedException {
         final SockiopathServer sockiopathServer;
@@ -128,12 +115,10 @@ public class SockiopathCommandLine {
     static SockiopathServer webSocketServer(Options options, ExecutorService executor, SessionStore<SockiopathSession> sessionStore) {
 
 
-        List<Supplier<SimpleChannelInboundHandler<?>>> messageHandlerSupplier = List.of();
-
-//        List.of(
-//                () -> new WebSocketIndexPageHandler(SockiopathServer.DEFAULT_WEB_SOCKET_PATH, "ui/websockets.html"),
-//                () -> new WebSocketHandler(sessionStore, getMessageHandlers(), DELIMINATOR)
-//        );
+        List<Supplier<SimpleChannelInboundHandler<?>>> messageHandlerSupplier = List.of(
+                () -> new WebSocketIndexPageHandler(SockiopathServer.DEFAULT_WEB_SOCKET_PATH, "ui/websockets.html"),
+                () -> new WebSocketServerHandler(sessionStore, getMessageHandlers())
+        );
 
         ChannelInitializer<SocketChannel> newHandler = SockiopathServer.basicWebSocketChannelHandler(
                 messageHandlerSupplier,
@@ -147,11 +132,34 @@ public class SockiopathCommandLine {
         );
     }
 
-//    static Map<String, MessageBus> getMessageHandlers() {
-//        return Map.of(
-//                "ping", new MessageBus((sockiopathMessage) -> {
-//                    return CompletableFuture.completedFuture("pong".getBytes());
+
+    static Map<String, MessageBus> getMessageHandlers() {
+        return Map.of(
+//                "chat", new MessageBus((sockiopathMessage) -> {
+//                    return CompletableFuture.completedFuture("hi".getBytes());
 //                }, 1000)
-//        );
-//    }
+        );
+    }
+
+
+    static SockioPathClient startWebSocketClient(
+            Options options,
+            int webSocketPort
+    ) throws InterruptedException {
+        final SockioPathClient sockiopathclient;
+        if (options.client()) {
+            sockiopathclient = Sockiopath.sockioPathClient();
+
+            sockiopathclient.registerClientMessageHandler(
+                    "chat",
+                    System.out::println,
+                    String::new
+            );
+
+            sockiopathclient.connectClient(webSocketPort, 0);
+        } else {
+            sockiopathclient = null;
+        }
+        return sockiopathclient;
+    }
 }

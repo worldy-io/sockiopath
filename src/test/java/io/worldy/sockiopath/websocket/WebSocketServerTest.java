@@ -18,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static io.worldy.sockiopath.SockiopathServerTest.channelEchoWebSocketHandler;
 import static io.worldy.sockiopath.SockiopathServerTest.getWebSocketClient;
@@ -31,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class WebSocketServerTest {
 
     @Test
-    void startServerTest() throws InterruptedException, ExecutionException {
+    void startServerTest() throws InterruptedException, ExecutionException, TimeoutException {
 
         CountDownLatch latch = new CountDownLatch(1);
         Map<Long, Object> responseMap = new HashMap<>();
@@ -45,7 +46,8 @@ public class WebSocketServerTest {
 
         BootstrappedWebSocketClient client = getWebSocketClient(latch, responseMap, port, null);
 
-        client.startup();
+        //client.startup().orTimeout(1000, TimeUnit.MILLISECONDS).get();
+        client.startupSync();
         if (!client.getChannel().writeAndFlush(new TextWebSocketFrame("test")).await(1000, TimeUnit.MILLISECONDS)) {
             throw new RuntimeException("Client took too long to send a message.");
         }
@@ -86,7 +88,7 @@ public class WebSocketServerTest {
 
         BootstrappedWebSocketClient client = getWebSocketClient(latch, responseMap, port, Mockito.mock(SslContext.class));
 
-        ChannelException channelException = assertThrows(ChannelException.class, client::startup);
+        ChannelException channelException = assertThrows(ChannelException.class, client::startupSync);
 
         assertEquals("Handshake took too long", channelException.getMessage());
     }
@@ -109,7 +111,7 @@ public class WebSocketServerTest {
         );
 
 
-        Exception exception = assertThrows(ChannelException.class, client::startup);
+        Exception exception = assertThrows(ChannelException.class, client::startupSync);
         assertEquals("Client took too long to connect", exception.getMessage());
     }
 
@@ -130,7 +132,7 @@ public class WebSocketServerTest {
         );
 
 
-        Exception exception = assertThrows(ChannelException.class, client::startup);
+        Exception exception = assertThrows(ChannelException.class, client::startupSync);
         assertEquals("Handshake took too long", exception.getMessage());
     }
 

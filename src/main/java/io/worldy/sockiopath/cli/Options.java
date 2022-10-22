@@ -110,7 +110,7 @@ record Options(
 
 
             boolean clientMode = Optional.ofNullable(
-                    cmd.getOptionValue(OPTION_SERVER_MODE.getLongOpt())
+                    cmd.getOptionValue(OPTION_CLIENT_MODE.getLongOpt())
             ).map(Boolean::parseBoolean).orElse(true);
 
             String host = Optional.ofNullable(

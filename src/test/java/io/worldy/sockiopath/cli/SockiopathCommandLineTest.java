@@ -1,6 +1,7 @@
 package io.worldy.sockiopath.cli;
 
 import io.worldy.sockiopath.SockiopathServer;
+import io.worldy.sockiopath.session.MapBackedSessionStore;
 import org.apache.commons.cli.HelpFormatter;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -12,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -132,7 +134,7 @@ class SockiopathCommandLineTest {
             try {
                 SockiopathCommandLine sockiopathCommandLine = new SockiopathCommandLine(getOptions(getStandardArgs()));
                 BufferedReader reader = Mockito.mock(BufferedReader.class);
-                Mockito.when(reader.readLine()).thenReturn("test1", null, "quit");
+                Mockito.when(reader.readLine()).thenReturn("test1", "quit");
                 sockiopathCommandLine.run(reader);
                 executorService.shutdownNow();
             } catch (ExecutionException | InterruptedException | IOException e) {
@@ -149,13 +151,13 @@ class SockiopathCommandLineTest {
     @Test
     void noServerOrClientStartedQuitGracefullyTest() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(1);
-        Logger mockLogger = Mockito.mock(Logger.class);
+        Logger loggerMock = Mockito.mock(Logger.class);
         executorService.submit(() -> {
             try {
                 List<String> additionalArgs = List.of("-s", "false", "-c", "false");
                 Options options = getOptions(addToStandardArgs(additionalArgs));
                 SockiopathCommandLine sockiopathCommandLine = new SockiopathCommandLine(options);
-                mockLogger.info(sockiopathCommandLine.run(Mockito.mock(BufferedReader.class)));
+                loggerMock.info(sockiopathCommandLine.run(Mockito.mock(BufferedReader.class)));
                 executorService.shutdownNow();
             } catch (ExecutionException | InterruptedException | IOException e) {
                 throw new RuntimeException("Unexpected exception caught in test task.", e);
@@ -165,7 +167,66 @@ class SockiopathCommandLineTest {
         if (!executorService.awaitTermination(10000, TimeUnit.MILLISECONDS)) {
             fail("Server took too long to shutdown from CLI.");
         }
-        Mockito.verify(mockLogger, Mockito.times(1)).info("No server or client was started. Closing CLI.");
+        Mockito.verify(loggerMock, Mockito.times(1)).info("No server or client was started. Closing CLI.");
+    }
+
+
+    @Test
+    void noClientStartedServerGracefullyShutsDownTest() throws InterruptedException {
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        Logger loggerMock = Mockito.mock(Logger.class);
+        executorService.submit(() -> {
+            try {
+                List<String> additionalArgs = List.of("-c", "false");
+                Options options = getOptions(addToStandardArgs(additionalArgs));
+                SockiopathCommandLine sockiopathCommandLine = new SockiopathCommandLine(options);
+                BufferedReader reader = Mockito.mock(BufferedReader.class);
+                Mockito.when(reader.readLine()).thenReturn("test1", "quit");
+                loggerMock.info(sockiopathCommandLine.run(reader));
+                executorService.shutdownNow();
+            } catch (ExecutionException | InterruptedException | IOException e) {
+                throw new RuntimeException("Unexpected exception caught in test task.", e);
+            }
+        });
+
+        if (!executorService.awaitTermination(10000, TimeUnit.MILLISECONDS)) {
+            fail("Server took too long to shutdown from CLI.");
+        }
+        Mockito.verify(loggerMock, Mockito.times(1)).info("stopping Sockiopath CLI...");
+    }
+
+    @Test
+    void noServerStartedClientGracefullyShutsDownTest() throws InterruptedException, ExecutionException {
+        SockiopathServer server = SockiopathCommandLine.startWebSocketServer(
+                getOptions(getStandardArgs()),
+                Executors.newFixedThreadPool(1),
+                new MapBackedSessionStore(new HashMap<>())
+        );
+        String port = String.valueOf(server.actualPort());
+
+        ExecutorService clientExecutorService = Executors.newFixedThreadPool(1);
+        Logger loggerMock = Mockito.mock(Logger.class);
+        clientExecutorService.submit(() -> {
+            try {
+
+                Options options = getOptions(addToStandardArgs(List.of("-s", "false", "-wsPort", port)));
+                BufferedReader reader = Mockito.mock(BufferedReader.class);
+                Mockito.when(reader.readLine()).thenReturn("test1", "quit");
+                loggerMock.info(
+                        new SockiopathCommandLine(options).run(reader)
+                );
+
+                clientExecutorService.shutdownNow();
+            } catch (ExecutionException | InterruptedException | IOException e) {
+                throw new RuntimeException("Unexpected exception caught in test task.", e);
+            }
+        });
+
+        if (!clientExecutorService.awaitTermination(10000, TimeUnit.MILLISECONDS)) {
+            fail("Server took too long to shutdown from CLI.");
+        }
+        server.stop();
+        Mockito.verify(loggerMock, Mockito.times(1)).info("stopping Sockiopath CLI...");
     }
 
     private List<String> addToStandardArgs(List<String> additionalArgs) {

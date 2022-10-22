@@ -20,7 +20,7 @@ class BootstrappedWebSocketClientTest {
                 1000
         );
 
-        RuntimeException runtimeException = assertThrows(RuntimeException.class, bootstrappedWebSocketClient::startup);
+        RuntimeException runtimeException = assertThrows(RuntimeException.class, bootstrappedWebSocketClient::startupSync);
         assertEquals(URISyntaxException.class, runtimeException.getCause().getClass());
     }
 }

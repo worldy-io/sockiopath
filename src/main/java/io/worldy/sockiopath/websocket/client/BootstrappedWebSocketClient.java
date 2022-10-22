@@ -17,12 +17,16 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
 
 public final class BootstrappedWebSocketClient {
+
+    private static final Logger logger = LoggerFactory.getLogger(BootstrappedWebSocketClient.class);
 
     protected final String host;
     protected final int port;
@@ -33,9 +37,17 @@ public final class BootstrappedWebSocketClient {
     protected final NioEventLoopGroup workGroup;
     protected final SimpleChannelInboundHandler<Object> messageHandler;
 
-    protected Channel channel;
+    private Channel channel;
 
-    public BootstrappedWebSocketClient(String host, int port, String path, SimpleChannelInboundHandler<Object> messageHandler, SslContext sslContext, int connectTimeoutMillis, int handshakeTimeoutMillis) {
+    public BootstrappedWebSocketClient(
+            String host,
+            int port,
+            String path,
+            SimpleChannelInboundHandler<Object> messageHandler,
+            SslContext sslContext,
+            int connectTimeoutMillis,
+            int handshakeTimeoutMillis
+    ) {
         this.host = host;
         this.port = port;
         this.path = path;
@@ -46,12 +58,7 @@ public final class BootstrappedWebSocketClient {
         this.workGroup = new NioEventLoopGroup();
     }
 
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public void startup() throws InterruptedException {
-
+    public void startupSync() {
         try {
             String scheme = sslContext != null ? "wss://" : "ws://";
 
@@ -91,8 +98,16 @@ public final class BootstrappedWebSocketClient {
             }
 
             this.channel = channelFuture.channel();
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public void shutdown() {
+        workGroup.shutdownGracefully();
     }
 }
