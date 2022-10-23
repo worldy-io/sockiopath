@@ -18,11 +18,12 @@ import io.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.net.URL;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
@@ -51,14 +52,18 @@ public class WebSocketIndexPageHandler extends SimpleChannelInboundHandler<FullH
     private String loadHtmlContent() {
         try {
             ClassLoader classLoader = getClass().getClassLoader();
-            URL resource = classLoader.getResource(htmlTemplatePath);
 
-            if (resource == null) {
+            InputStream is = classLoader.getResourceAsStream(htmlTemplatePath);
+
+            if (is == null) {
                 throw new RuntimeException("WebSocket UI HTML resource could not be located: '%s'".formatted(htmlTemplatePath));
             }
 
-            File file = new File(resource.toURI());
-            List<String> lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+            List<String> lines = new BufferedReader(
+                    new InputStreamReader(is, StandardCharsets.UTF_8))
+                    .lines()
+                    .collect(Collectors.toList());
+
             return String.join(NEWLINE, lines);
         } catch (Exception e) {
             logger.error("Exception while loading WebSocket UI HTML: " + e.getMessage(), e);

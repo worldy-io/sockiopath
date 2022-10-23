@@ -24,14 +24,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 class SockiopathCommandLineTest {
 
-    //private static final Logger logger = LoggerFactory.getLogger(SockiopathCommandLineTest.class);
-
-    @Test
-    void run() {
-    }
 
     @Test
     void mainInterruptedTest() throws InterruptedException {
+        Logger loggerMock = Mockito.mock(Logger.class);
+
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         executorService.submit(() -> {
             try {
@@ -40,8 +37,6 @@ class SockiopathCommandLineTest {
                 throw new RuntimeException("Unexpected exception caught in test task.", e);
             }
         });
-
-        Logger loggerMock = Mockito.mock(Logger.class);
 
         SockiopathServer.shutdownAndAwaitTermination(executorService, 0L, 1L, loggerMock);
 
@@ -54,6 +49,8 @@ class SockiopathCommandLineTest {
 
     @Test
     void mainQuitGracefullyTest() throws InterruptedException {
+        Logger loggerMock = Mockito.mock(Logger.class);
+
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         executorService.submit(() -> {
             try {
@@ -63,8 +60,6 @@ class SockiopathCommandLineTest {
                 throw new RuntimeException("Unexpected exception caught in test task.", e);
             }
         });
-
-        Logger loggerMock = Mockito.mock(Logger.class);
 
         SockiopathServer.shutdownAndAwaitTermination(executorService, 0L, 1L, loggerMock);
 
@@ -245,17 +240,5 @@ class SockiopathCommandLineTest {
 
     private static String[] getArgs(List<String> args) {
         return args.toArray(new String[0]);
-    }
-
-    @Test
-    void startWebSocketServer() {
-    }
-
-    @Test
-    void webSocketServer() {
-    }
-
-    @Test
-    void getMessageHandlers() {
     }
 }

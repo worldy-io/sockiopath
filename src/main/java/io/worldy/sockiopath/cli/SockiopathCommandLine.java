@@ -40,7 +40,7 @@ public class SockiopathCommandLine {
         this.options = options;
     }
 
-    public static void main(String args[]) throws ExecutionException, InterruptedException, IOException {
+    public static void main(String... args) throws ExecutionException, InterruptedException, IOException {
         Options options = Options.parse(args, new HelpFormatter());
         String response = new SockiopathCommandLine(options).run();
         System.out.println(response);
