@@ -34,7 +34,7 @@ public class Sockiopath implements SockioPathClient {
     }
 
     @Override
-    public void connectClient(int webSocketPort, int udpPort) throws InterruptedException {
+    public void connectClient(int webSocketPort, int udpPort, Consumer<TextWebSocketFrame> onTextFrame) throws InterruptedException {
 
         webSocketClient = new BootstrappedWebSocketClient(
                 "localhost",
@@ -44,7 +44,7 @@ public class Sockiopath implements SockioPathClient {
                     @Override
                     protected void handleTextFrame(TextWebSocketFrame textFrame) {
                         super.handleTextFrame(textFrame);
-                        System.out.println("-> " + textFrame.text());
+                        onTextFrame.accept(textFrame);
                     }
                 },
                 null,

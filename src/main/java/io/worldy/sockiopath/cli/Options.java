@@ -138,7 +138,7 @@ record Options(
             return new Options(serverMode, clientMode, webSocketHost, webSocketPort, udpHost, udpPort);
 
         } catch (ParseException e) {
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
             formatter.printHelp(HELP_MESSAGE, options);
         }
         return null;

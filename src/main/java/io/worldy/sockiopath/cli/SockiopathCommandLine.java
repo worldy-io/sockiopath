@@ -158,7 +158,11 @@ public class SockiopathCommandLine {
                     String::new
             );
 
-            sockiopathclient.connectClient(webSocketPort, 0);
+            sockiopathclient.connectClient(
+                    webSocketPort,
+                    0,
+                    (textFrame) -> System.out.println("-> " + textFrame.text())
+            );
         } else {
             sockiopathclient = null;
         }
