@@ -12,9 +12,7 @@ import java.util.function.Function;
 
 public class Sockiopath implements SockioPathClient {
 
-
     Map<String, MessageBus> clientMessageHandlers = new HashMap<>();
-
 
     BootstrappedWebSocketClient webSocketClient = null;
 
@@ -42,12 +40,18 @@ public class Sockiopath implements SockioPathClient {
                 "localhost",
                 webSocketPort,
                 SockiopathServer.DEFAULT_WEB_SOCKET_PATH,
-                new WebSocketClientHandler(clientMessageHandlers),
+                new WebSocketClientHandler(clientMessageHandlers) {
+                    @Override
+                    protected void handleTextFrame(TextWebSocketFrame textFrame) {
+                        super.handleTextFrame(textFrame);
+                        System.out.println("-> " + textFrame.text());
+                    }
+                },
                 null,
                 1000,
                 1000
         );
-        webSocketClient.startupSync();
+        webSocketClient.startup();
 
     }
 

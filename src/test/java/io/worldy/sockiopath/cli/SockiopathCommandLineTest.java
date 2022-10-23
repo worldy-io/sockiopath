@@ -77,7 +77,7 @@ class SockiopathCommandLineTest {
             try {
                 SockiopathCommandLine sockiopathCommandLine = new SockiopathCommandLine(getOptions(getStandardArgs()));
                 BufferedReader reader = Mockito.mock(BufferedReader.class);
-                Mockito.when(reader.readLine()).thenReturn("quit");
+                Mockito.when(reader.readLine()).thenReturn("/quit");
                 sockiopathCommandLine.run(reader);
                 executorService.shutdownNow();
             } catch (ExecutionException | InterruptedException | IOException e) {
@@ -129,7 +129,28 @@ class SockiopathCommandLineTest {
             try {
                 SockiopathCommandLine sockiopathCommandLine = new SockiopathCommandLine(getOptions(getStandardArgs()));
                 BufferedReader reader = Mockito.mock(BufferedReader.class);
-                Mockito.when(reader.readLine()).thenReturn("test1", "quit");
+                Mockito.when(reader.readLine()).thenReturn("test", "/quit");
+                sockiopathCommandLine.run(reader);
+                executorService.shutdownNow();
+            } catch (ExecutionException | InterruptedException | IOException e) {
+                throw new RuntimeException("Unexpected exception caught in test task.", e);
+            }
+        });
+
+        if (!executorService.awaitTermination(10000, TimeUnit.MILLISECONDS)) {
+            fail("Server took too long to shutdown from CLI.");
+        }
+    }
+
+    @Test
+    void joinCommandThenQuitTest() throws InterruptedException, IOException, URISyntaxException {
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+
+        executorService.submit(() -> {
+            try {
+                SockiopathCommandLine sockiopathCommandLine = new SockiopathCommandLine(getOptions(getStandardArgs()));
+                BufferedReader reader = Mockito.mock(BufferedReader.class);
+                Mockito.when(reader.readLine()).thenReturn("join", "/quit");
                 sockiopathCommandLine.run(reader);
                 executorService.shutdownNow();
             } catch (ExecutionException | InterruptedException | IOException e) {
@@ -176,7 +197,7 @@ class SockiopathCommandLineTest {
                 Options options = getOptions(addToStandardArgs(additionalArgs));
                 SockiopathCommandLine sockiopathCommandLine = new SockiopathCommandLine(options);
                 BufferedReader reader = Mockito.mock(BufferedReader.class);
-                Mockito.when(reader.readLine()).thenReturn("test1", "quit");
+                Mockito.when(reader.readLine()).thenReturn("test", "/quit");
                 loggerMock.info(sockiopathCommandLine.run(reader));
                 executorService.shutdownNow();
             } catch (ExecutionException | InterruptedException | IOException e) {
@@ -206,7 +227,7 @@ class SockiopathCommandLineTest {
 
                 Options options = getOptions(addToStandardArgs(List.of("-s", "false", "-wsPort", port)));
                 BufferedReader reader = Mockito.mock(BufferedReader.class);
-                Mockito.when(reader.readLine()).thenReturn("test1", "quit");
+                Mockito.when(reader.readLine()).thenReturn("test", "/quit");
                 loggerMock.info(
                         new SockiopathCommandLine(options).run(reader)
                 );

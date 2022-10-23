@@ -47,7 +47,7 @@ public class WebSocketServerTest {
         BootstrappedWebSocketClient client = getWebSocketClient(latch, responseMap, port, null);
 
         //client.startup().orTimeout(1000, TimeUnit.MILLISECONDS).get();
-        client.startupSync();
+        client.startup();
         if (!client.getChannel().writeAndFlush(new TextWebSocketFrame("test")).await(1000, TimeUnit.MILLISECONDS)) {
             throw new RuntimeException("Client took too long to send a message.");
         }
@@ -88,7 +88,7 @@ public class WebSocketServerTest {
 
         BootstrappedWebSocketClient client = getWebSocketClient(latch, responseMap, port, Mockito.mock(SslContext.class));
 
-        ChannelException channelException = assertThrows(ChannelException.class, client::startupSync);
+        ChannelException channelException = assertThrows(ChannelException.class, client::startup);
 
         assertEquals("Handshake took too long", channelException.getMessage());
     }
@@ -111,7 +111,7 @@ public class WebSocketServerTest {
         );
 
 
-        Exception exception = assertThrows(ChannelException.class, client::startupSync);
+        Exception exception = assertThrows(ChannelException.class, client::startup);
         assertEquals("Client took too long to connect", exception.getMessage());
     }
 
@@ -132,7 +132,7 @@ public class WebSocketServerTest {
         );
 
 
-        Exception exception = assertThrows(ChannelException.class, client::startupSync);
+        Exception exception = assertThrows(ChannelException.class, client::startup);
         assertEquals("Handshake took too long", exception.getMessage());
     }
 

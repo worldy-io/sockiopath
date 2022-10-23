@@ -34,6 +34,8 @@ import java.util.function.Supplier;
 public class SockiopathCommandLine {
 
     private static final Logger logger = LoggerFactory.getLogger(SockiopathCommandLine.class);
+
+    private static final String COMMAND_QUIT = "/quit";
     private final Options options;
 
     public SockiopathCommandLine(Options options) {
@@ -87,7 +89,7 @@ public class SockiopathCommandLine {
 
             //System.out.println("command: " + command);
 
-            if (command.equals("quit")) {
+            if (command.equals(COMMAND_QUIT)) {
                 maybeWebSocketServer.ifPresent(SockiopathServer::stop);
                 maybeWebSocketClient.ifPresent(SockioPathClient::shutdownClient);
                 quit = true;

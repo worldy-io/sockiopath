@@ -48,8 +48,7 @@ public class WebSocketClientHandler extends SockiopathHandler<Object> {
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object frame) {
         if (frame instanceof TextWebSocketFrame textFrame) {
-            logger.debug("MESSAGE received: " + textFrame.text());
-            System.out.println("-> " + textFrame.text());
+            handleTextFrame(textFrame);
         } else if (frame instanceof BinaryWebSocketFrame binaryFrame) {
             logger.debug("BINARY received");
             super.channelRead0(ctx, WebSocketServerHandler.VIRTUAL_INET_SOCKET_ADDRESS, binaryFrame.content());
@@ -58,4 +57,7 @@ public class WebSocketClientHandler extends SockiopathHandler<Object> {
         }
     }
 
+    protected void handleTextFrame(TextWebSocketFrame textFrame) {
+        logger.debug("MESSAGE received: " + textFrame.text());
+    }
 }

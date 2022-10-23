@@ -58,7 +58,7 @@ public final class BootstrappedWebSocketClient {
         this.workGroup = new NioEventLoopGroup();
     }
 
-    public void startupSync() {
+    public void startup() {
         try {
             String scheme = sslContext != null ? "wss://" : "ws://";
 
