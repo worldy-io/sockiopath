@@ -1,4 +1,4 @@
-name: GraalVM Native Image build
+name: Build Native
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     tags: [ '*' ]
 
 jobs:
-  buildOnLinux:
+  linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,3 +26,26 @@ jobs:
         with:
           name: linux-native
           path: target/linux-native
+  windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ilammy/msvc-dev-cmd@v1.5.0
+      - uses: microsoft/setup-msbuild@v1
+      - uses: ayltai/setup-graalvm@v1
+        with:
+          java-version: 17
+          graalvm-version: 22.2.0
+          native-image: true
+      - name: Build with Maven
+        run: mvn -B clean install -Dnative --file pom.xml
+        shell: powershell
+      - name: Move artifacts
+        run: mkdir target/windows-native && mv target/sockiopath*runner target/windows-native
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows-native
+          path: target/windows-native
