@@ -17,15 +17,17 @@ jobs:
           graalvm-version: 22.2.0
           native-image: true
       - name: Build with Maven
-        run: mvn -DskipTests -B clean install -Dnative --file pom.xml
+        run: mvn -B clean install -Dnative --file pom.xml
+      - name: Move artifacts
+        run: mkdir target/native && mv target/sockiopath*runner target/native
       - name: Run UPX
         uses: crazy-max/ghaction-upx@v1.3.3
         with:
           version: latest
-          file: target/demo-cli
+          file: target/native
           args: '-7'
       - name: Upload artifacts
-        run: mkdir staging && cp target/demo-cli staging/demo-cli-linux-amd64
+        run: mkdir staging && cp -r target/native staging/native
       - uses: actions/upload-artifact@v2
         with:
           name: package
