@@ -47,21 +47,21 @@ jobs:
 #          name: windows-native
 #          path: target/windows-native
 
-  mac:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ayltai/setup-graalvm@v1
-        with:
-          java-version: 17
-          graalvm-version: 22.2.0
-          native-image: true
-      - name: Build with Maven
-        run: mvn -B clean install -Dnative --file pom.xml
-      - name: Move artifacts
-        run: mkdir target/mac-native && mv target/sockiopath*runner target/mac-native
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: mac-native
-          path: target/mac-native
+#  mac:
+#    runs-on: macos-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: ayltai/setup-graalvm@v1
+#        with:
+#          java-version: 17
+#          graalvm-version: 22.2.0
+#          native-image: true
+#      - name: Build with Maven
+#        run: mvn -B clean install -Dnative --file pom.xml
+#      - name: Move artifacts
+#        run: mkdir target/mac-native && mv target/sockiopath*runner target/mac-native
+#      - name: Upload artifacts
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: mac-native
+#          path: target/mac-native
