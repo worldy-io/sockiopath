@@ -57,7 +57,7 @@ jobs:
           graalvm-version: 22.2.0
           native-image: true
       - name: Build with Maven
-        run: mvn -DskipTests -B clean package native-image:native-image --file pom.xml
+        run: mvn -B clean install -Dnative --file pom.xml
       - name: Move artifacts
         run: mkdir target/mac-native && mv target/sockiopath*runner target/mac-native
       - name: Upload artifacts
