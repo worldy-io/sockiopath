@@ -19,16 +19,10 @@ jobs:
       - name: Build with Maven
         run: mvn -B clean install -Dnative --file pom.xml
       - name: Move artifacts
-        run: mkdir target/native && mv target/sockiopath*runner target/native
-      - name: Run UPX
-        uses: crazy-max/ghaction-upx@v1.3.3
-        with:
-          version: latest
-          file: target/native
-          args: '-7'
+        run: mkdir target/linux-native && mv target/sockiopath*runner target/linux-native
+
       - name: Upload artifacts
-        run: mkdir staging && cp -r target/native staging/native
-      - uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v2
         with:
-          name: package
-          path: staging
+          name: linux-native
+          path: target/linux-native
