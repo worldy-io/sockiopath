@@ -18,10 +18,10 @@ record Options(
         int udpPort
 ) {
 
-    private static String DEFAULT_HOST = "localhost";
+    private static final String DEFAULT_HOST = "localhost";
 
-    private static int DEFAULT_WEB_SOCKET_PORT = 4242;
-    private static int DEFAULT_UDP_PORT = 4200;
+    private static final int DEFAULT_WEB_SOCKET_PORT = 4242;
+    private static final int DEFAULT_UDP_PORT = 4200;
 
     private static final String HELP_MESSAGE = "Sockiopath [WebSocket and UDP client/service]";
 
